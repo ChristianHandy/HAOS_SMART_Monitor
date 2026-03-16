@@ -94,30 +94,27 @@ class SmartDataFetcher:
         """Execute a command over SSH. Returns (stdout, stderr)."""
         if not self._client:
             raise RuntimeError("SSH client not connected")
-        # Request a pseudo-TTY — required on some systems (Unraid, Proxmox)
-        # where raw device access is gated on having a real terminal session.
-        transport = self._client.get_transport()
-        channel = transport.open_session()
-        channel.get_pty()
-        channel.exec_command(command)
-        # Read all output
-        out_chunks = []
-        err_chunks = []
-        while True:
-            if channel.recv_ready():
-                out_chunks.append(channel.recv(4096).decode("utf-8", errors="replace"))
-            if channel.recv_stderr_ready():
-                err_chunks.append(channel.recv_stderr(4096).decode("utf-8", errors="replace"))
-            if channel.exit_status_ready():
-                # Drain any remaining data
-                while channel.recv_ready():
-                    out_chunks.append(channel.recv(4096).decode("utf-8", errors="replace"))
-                while channel.recv_stderr_ready():
-                    err_chunks.append(channel.recv_stderr(4096).decode("utf-8", errors="replace"))
-                break
-        channel.close()
-        out = "".join(out_chunks)
-        err = "".join(err_chunks)
+
+        # Do NOT use get_pty() — it merges stderr into stdout and adds
+        # terminal escape codes that break JSON parsing.
+        # Instead, set environment variables to ensure correct behaviour.
+        _, stdout, stderr = self._client.exec_command(
+            command,
+            timeout=30,
+            environment={
+                "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "HOME": "/root",
+                "TERM": "dumb",
+            },
+        )
+        out = stdout.read().decode("utf-8", errors="replace")
+        err = stderr.read().decode("utf-8", errors="replace")
+        exit_code = stdout.channel.recv_exit_status()
+        _LOGGER.debug(
+            "exec(%r) → exit=%d stdout=%r err=%r",
+            command, exit_code, out[:300], err[:300],
+        )
+        return out, err
         if err.strip():
             _LOGGER.debug("SSH stderr for '%s': %s", command, err.strip())
         return out, err
@@ -172,20 +169,24 @@ class SmartDataFetcher:
         disk = DiskSmartData(device=device)
         try:
             smartctl = self._smartctl_path
-            # Try JSON output first (smartctl >= 7.0)
             json_out, json_err = self._exec(f"{smartctl} -a --json=c {device} 2>&1")
-            _LOGGER.debug("smartctl JSON output for %s (first 200 chars): %s", device, json_out[:200])
+            _LOGGER.warning(
+                "smartctl output for %s on %s (first 300): %r err: %r",
+                device, self.host, json_out[:300], json_err[:300],
+            )
             if json_out.strip().startswith("{"):
                 disk = self._parse_smartctl_json(device, json_out)
             else:
-                _LOGGER.debug("No JSON output for %s, falling back to text. stderr: %s", device, json_err[:200])
                 text_out, text_err = self._exec(f"{smartctl} -a {device} 2>&1")
-                _LOGGER.debug("smartctl text output for %s (first 200 chars): %s", device, text_out[:200])
+                _LOGGER.warning(
+                    "smartctl text fallback for %s: %r err: %r",
+                    device, text_out[:300], text_err[:300],
+                )
                 if text_out.strip():
                     disk = self._parse_smartctl_text(device, text_out)
                 else:
-                    disk.error = f"No output from smartctl. stderr: {json_err or text_err}"
-                    _LOGGER.error("smartctl returned no output for %s on %s: %s", device, self.host, disk.error)
+                    disk.error = f"No output. stderr: {json_err or text_err}"
+                    _LOGGER.error("smartctl no output for %s on %s: %s", device, self.host, disk.error)
         except Exception as exc:
             _LOGGER.error("Error reading SMART data for %s on %s: %s", device, self.host, exc)
             disk.error = str(exc)
@@ -217,9 +218,9 @@ class SmartDataFetcher:
         try:
             self.connect()
             self._smartctl_path = self._find_smartctl()
-            _LOGGER.info("Using smartctl: %s on %s", self._smartctl_path, self.host)
+            _LOGGER.warning("smart_monitor: using smartctl=%s on %s", self._smartctl_path, self.host)
             devices = self.list_disks()
-            _LOGGER.debug("Found %d disks on %s: %s", len(devices), self.host, devices)
+            _LOGGER.warning("smart_monitor: found disks on %s: %s", self.host, devices)
             for dev in devices:
                 results[dev] = self.get_smart_data(dev)
         except Exception as exc:
