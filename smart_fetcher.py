@@ -135,12 +135,13 @@ class SmartDataFetcher:
         disk = DiskSmartData(device=device)
         try:
             # Try JSON output first (smartctl >= 7.0)
-            json_out = self._exec(f"sudo smartctl -a --json=c {device} 2>/dev/null")
+            # Use sudo only if not already root; Unraid/Proxmox default to root
+            prefix = "" if self.username == "root" else "sudo "
+            json_out = self._exec(f"{prefix}smartctl -a --json=c {device} 2>/dev/null")
             if json_out.strip().startswith("{"):
                 disk = self._parse_smartctl_json(device, json_out)
             else:
-                # Fall back to text output
-                text_out = self._exec(f"sudo smartctl -a {device} 2>/dev/null")
+                text_out = self._exec(f"{prefix}smartctl -a {device} 2>/dev/null")
                 disk = self._parse_smartctl_text(device, text_out)
         except Exception as exc:
             _LOGGER.error("Error reading SMART data for %s on %s: %s", device, self.host, exc)
@@ -155,7 +156,8 @@ class SmartDataFetcher:
         """
         try:
             self.connect()
-            out = self._exec(f"sudo smartctl -t {test_type} {device} 2>&1")
+            prefix = "" if self.username == "root" else "sudo "
+            out = self._exec(f"{prefix}smartctl -t {test_type} {device} 2>&1")
         finally:
             self.disconnect()
         return out
@@ -164,7 +166,8 @@ class SmartDataFetcher:
         """Return the full smartctl -x output as a string for download."""
         try:
             self.connect()
-            out = self._exec(f"sudo smartctl -x {device} 2>&1")
+            prefix = "" if self.username == "root" else "sudo "
+            out = self._exec(f"{prefix}smartctl -x {device} 2>&1")
         finally:
             self.disconnect()
         return out
