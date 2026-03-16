@@ -38,14 +38,43 @@ async def async_setup_entry(
     server_type = entry.data.get(CONF_SERVER_TYPE, "generic_linux")
 
     entities: list[ButtonEntity] = []
-    if coordinator.data:
-        for device in coordinator.data:
-            entities.append(RunTestButton(coordinator, entry, device, host, server_type, "short"))
-            entities.append(RunTestButton(coordinator, entry, device, host, server_type, "long"))
-            entities.append(RunTestButton(coordinator, entry, device, host, server_type, "conveyance"))
-            entities.append(DownloadReportButton(coordinator, entry, device, host, server_type))
+
+    # Collect known devices from coordinator data OR fall back to an empty
+    # sentinel so that at least a server-level "refresh" button is available.
+    # Per-disk buttons are created for every device that was discovered on the
+    # first poll.  If the first poll failed the devices will be empty here but
+    # a coordinator listener will add new entities once data arrives.
+    devices = list(coordinator.data.keys()) if coordinator.data else []
+
+    for device in devices:
+        entities.append(RunTestButton(coordinator, entry, device, host, server_type, "short"))
+        entities.append(RunTestButton(coordinator, entry, device, host, server_type, "long"))
+        entities.append(RunTestButton(coordinator, entry, device, host, server_type, "conveyance"))
+        entities.append(DownloadReportButton(coordinator, entry, device, host, server_type))
 
     async_add_entities(entities)
+
+    # Register a listener: if data arrives late (first poll was slow/failed),
+    # add any newly discovered disk buttons dynamically.
+    _known: set[str] = set(devices)
+
+    def _check_new_devices() -> None:
+        nonlocal _known
+        if not coordinator.data:
+            return
+        new_devices = set(coordinator.data.keys()) - _known
+        if not new_devices:
+            return
+        _known.update(new_devices)
+        new_entities: list[ButtonEntity] = []
+        for dev in new_devices:
+            new_entities.append(RunTestButton(coordinator, entry, dev, host, server_type, "short"))
+            new_entities.append(RunTestButton(coordinator, entry, dev, host, server_type, "long"))
+            new_entities.append(RunTestButton(coordinator, entry, dev, host, server_type, "conveyance"))
+            new_entities.append(DownloadReportButton(coordinator, entry, dev, host, server_type))
+        async_add_entities(new_entities)
+
+    coordinator.async_add_listener(_check_new_devices)
 
 
 # ---------------------------------------------------------------------------

@@ -26,12 +26,30 @@ async def async_setup_entry(
     server_type = entry.data.get(CONF_SERVER_TYPE, "generic_linux")
 
     entities = []
-    if coordinator.data:
-        for device in coordinator.data:
-            entities.append(DiskHealthBinarySensor(coordinator, entry, device, host, server_type))
-            entities.append(DiskProblemBinarySensor(coordinator, entry, device, host, server_type))
+    devices = list(coordinator.data.keys()) if coordinator.data else []
+    for device in devices:
+        entities.append(DiskHealthBinarySensor(coordinator, entry, device, host, server_type))
+        entities.append(DiskProblemBinarySensor(coordinator, entry, device, host, server_type))
 
     async_add_entities(entities, True)
+
+    _known: set[str] = set(devices)
+
+    def _check_new_devices() -> None:
+        nonlocal _known
+        if not coordinator.data:
+            return
+        new_devices = set(coordinator.data.keys()) - _known
+        if not new_devices:
+            return
+        _known.update(new_devices)
+        new_ents = []
+        for dev in new_devices:
+            new_ents.append(DiskHealthBinarySensor(coordinator, entry, dev, host, server_type))
+            new_ents.append(DiskProblemBinarySensor(coordinator, entry, dev, host, server_type))
+        async_add_entities(new_ents, True)
+
+    coordinator.async_add_listener(_check_new_devices)
 
 
 class _DiskBinarySensorBase(CoordinatorEntity[SmartMonitorCoordinator], BinarySensorEntity):

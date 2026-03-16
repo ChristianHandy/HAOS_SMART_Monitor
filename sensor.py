@@ -36,27 +36,45 @@ async def async_setup_entry(
     host = entry.data[CONF_HOST]
     server_type = entry.data.get(CONF_SERVER_TYPE, "generic_linux")
 
+    def _build_sensors_for_device(device: str, disk_data: "DiskSmartData") -> list[SensorEntity]:
+        ents: list[SensorEntity] = []
+        ents.append(DiskHealthSensor(coordinator, entry, device, host, server_type))
+        ents.append(DiskTemperatureSensor(coordinator, entry, device, host, server_type))
+        ents.append(DiskPowerOnHoursSensor(coordinator, entry, device, host, server_type))
+        ents.append(DiskPowerCyclesSensor(coordinator, entry, device, host, server_type))
+        ents.append(DiskLastTestSensor(coordinator, entry, device, host, server_type))
+        if disk_data.disk_type in ("HDD", "SSD"):
+            ents.append(DiskReallocatedSectorsSensor(coordinator, entry, device, host, server_type))
+            ents.append(DiskPendingSectorsSensor(coordinator, entry, device, host, server_type))
+            ents.append(DiskUncorrectableSectorsSensor(coordinator, entry, device, host, server_type))
+        if disk_data.disk_type == "NVMe":
+            for key in ("available_spare", "percentage_used", "media_errors"):
+                ents.append(DiskNvmeAttributeSensor(coordinator, entry, device, host, server_type, key))
+        return ents
+
     if coordinator.data:
         for device, disk_data in coordinator.data.items():
-            # Core sensors for every disk
-            entities.append(DiskHealthSensor(coordinator, entry, device, host, server_type))
-            entities.append(DiskTemperatureSensor(coordinator, entry, device, host, server_type))
-            entities.append(DiskPowerOnHoursSensor(coordinator, entry, device, host, server_type))
-            entities.append(DiskPowerCyclesSensor(coordinator, entry, device, host, server_type))
-            entities.append(DiskLastTestSensor(coordinator, entry, device, host, server_type))
-
-            # HDD/SSD specific
-            if disk_data.disk_type in ("HDD", "SSD"):
-                entities.append(DiskReallocatedSectorsSensor(coordinator, entry, device, host, server_type))
-                entities.append(DiskPendingSectorsSensor(coordinator, entry, device, host, server_type))
-                entities.append(DiskUncorrectableSectorsSensor(coordinator, entry, device, host, server_type))
-
-            # NVMe specific
-            if disk_data.disk_type == "NVMe":
-                for key in ("available_spare", "percentage_used", "media_errors"):
-                    entities.append(DiskNvmeAttributeSensor(coordinator, entry, device, host, server_type, key))
+            entities.extend(_build_sensors_for_device(device, disk_data))
 
     async_add_entities(entities, True)
+
+    # Dynamic listener for late-arriving data
+    _known: set[str] = set(coordinator.data.keys()) if coordinator.data else set()
+
+    def _check_new_devices() -> None:
+        nonlocal _known
+        if not coordinator.data:
+            return
+        new_devices = set(coordinator.data.keys()) - _known
+        if not new_devices:
+            return
+        _known.update(new_devices)
+        new_ents: list[SensorEntity] = []
+        for dev in new_devices:
+            new_ents.extend(_build_sensors_for_device(dev, coordinator.data[dev]))
+        async_add_entities(new_ents, True)
+
+    coordinator.async_add_listener(_check_new_devices)
 
 
 # ---------------------------------------------------------------------------
