@@ -4,7 +4,6 @@ from __future__ import annotations
 import json
 import logging
 import re
-import shlex
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -95,12 +94,30 @@ class SmartDataFetcher:
         """Execute a command over SSH. Returns (stdout, stderr)."""
         if not self._client:
             raise RuntimeError("SSH client not connected")
-        # Wrap in a login shell so PATH and permissions are fully initialised.
-        # This is needed on Unraid/Proxmox where SSH exec sessions are non-login.
-        wrapped = f"bash -l -c {shlex.quote(command)}"
-        _, stdout, stderr = self._client.exec_command(wrapped, timeout=30)
-        out = stdout.read().decode("utf-8", errors="replace")
-        err = stderr.read().decode("utf-8", errors="replace")
+        # Request a pseudo-TTY — required on some systems (Unraid, Proxmox)
+        # where raw device access is gated on having a real terminal session.
+        transport = self._client.get_transport()
+        channel = transport.open_session()
+        channel.get_pty()
+        channel.exec_command(command)
+        # Read all output
+        out_chunks = []
+        err_chunks = []
+        while True:
+            if channel.recv_ready():
+                out_chunks.append(channel.recv(4096).decode("utf-8", errors="replace"))
+            if channel.recv_stderr_ready():
+                err_chunks.append(channel.recv_stderr(4096).decode("utf-8", errors="replace"))
+            if channel.exit_status_ready():
+                # Drain any remaining data
+                while channel.recv_ready():
+                    out_chunks.append(channel.recv(4096).decode("utf-8", errors="replace"))
+                while channel.recv_stderr_ready():
+                    err_chunks.append(channel.recv_stderr(4096).decode("utf-8", errors="replace"))
+                break
+        channel.close()
+        out = "".join(out_chunks)
+        err = "".join(err_chunks)
         if err.strip():
             _LOGGER.debug("SSH stderr for '%s': %s", command, err.strip())
         return out, err
