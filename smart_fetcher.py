@@ -174,7 +174,29 @@ class SmartDataFetcher:
                 "smartctl output for %s on %s (first 300): %r err: %r",
                 device, self.host, json_out[:300], json_err[:300],
             )
+
+            if not json_out.strip():
+                disk.error = f"No output from smartctl for {device}"
+                _LOGGER.error(disk.error)
+                return disk
+
             if json_out.strip().startswith("{"):
+                # Check for device open errors inside the JSON before full parse
+                try:
+                    quick = json.loads(json_out)
+                    messages = quick.get("smartctl", {}).get("messages", [])
+                    for msg in messages:
+                        text = msg.get("string", "")
+                        if "Permission denied" in text or "failed" in text.lower():
+                            disk.error = text
+                            _LOGGER.error(
+                                "smartctl device error for %s on %s: %s — "
+                                "Fix: run 'setcap cap_sys_rawio+ep $(which smartctl)' on %s",
+                                device, self.host, text, self.host,
+                            )
+                            return disk
+                except Exception:
+                    pass
                 disk = self._parse_smartctl_json(device, json_out)
             else:
                 text_out, text_err = self._exec(f"{smartctl} -a {device} 2>&1")
