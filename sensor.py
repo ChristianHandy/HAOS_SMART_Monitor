@@ -43,6 +43,7 @@ async def async_setup_entry(
             entities.append(DiskTemperatureSensor(coordinator, entry, device, host, server_type))
             entities.append(DiskPowerOnHoursSensor(coordinator, entry, device, host, server_type))
             entities.append(DiskPowerCyclesSensor(coordinator, entry, device, host, server_type))
+            entities.append(DiskLastTestSensor(coordinator, entry, device, host, server_type))
 
             # HDD/SSD specific
             if disk_data.disk_type in ("HDD", "SSD"):
@@ -272,3 +273,33 @@ class DiskNvmeAttributeSensor(DiskSensorBase):
             return None
         attr = disk.nvme_attributes.get(self._attr_key, {})
         return attr.get("value")
+
+
+class DiskLastTestSensor(DiskSensorBase):
+    """Sensor showing the last SMART self-test date and result."""
+
+    _attr_icon = "mdi:clipboard-check-outline"
+
+    def __init__(self, coordinator, entry, device, host, server_type):
+        super().__init__(coordinator, entry, device, host, server_type)
+        self._attr_unique_id = f"{host}_{self._dev_slug}_last_test"
+        self._attr_name = "Last Self-Test"
+
+    @property
+    def native_value(self) -> str | None:
+        disk = self._disk_data
+        if not disk or disk.last_test_result is None:
+            return "Never"
+        return disk.last_test_result
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        disk = self._disk_data
+        if not disk:
+            return {}
+        return {
+            "last_test_type": disk.last_test_type,
+            "last_test_date": disk.last_test_date,
+            "last_test_remaining_percent": disk.last_test_remaining,
+            "test_log": disk.test_log[:10],  # last 10 entries
+        }

@@ -35,6 +35,12 @@ class DiskSmartData:
     nvme_attributes: dict[str, Any] = field(default_factory=dict)
     raw_output: str = ""
     error: str | None = None
+    # Self-test log
+    last_test_type: str | None = None       # "Short", "Extended", "Conveyance"
+    last_test_result: str | None = None     # "Completed without error", "Failed", …
+    last_test_date: str | None = None       # ISO-8601 string or human-readable
+    last_test_remaining: int | None = None  # % remaining (0 = done)
+    test_log: list[dict[str, Any]] = field(default_factory=list)  # up to 21 entries
 
 
 class SmartDataFetcher:
@@ -141,6 +147,28 @@ class SmartDataFetcher:
             disk.error = str(exc)
         return disk
 
+    def run_test(self, device: str, test_type: str = "short") -> str:
+        """Start a SMART self-test on the device.
+
+        test_type: 'short' | 'long' | 'conveyance'
+        Returns the raw smartctl output (status message).
+        """
+        try:
+            self.connect()
+            out = self._exec(f"sudo smartctl -t {test_type} {device} 2>&1")
+        finally:
+            self.disconnect()
+        return out
+
+    def download_report(self, device: str) -> str:
+        """Return the full smartctl -x output as a string for download."""
+        try:
+            self.connect()
+            out = self._exec(f"sudo smartctl -x {device} 2>&1")
+        finally:
+            self.disconnect()
+        return out
+
     def fetch_all_disks(self) -> dict[str, DiskSmartData]:
         """Connect, fetch all disks, disconnect, return results."""
         results: dict[str, DiskSmartData] = {}
@@ -239,6 +267,10 @@ class SmartDataFetcher:
                 disk.power_on_hours = nvme_health.get("power_on_hours", disk.power_on_hours)
                 disk.power_cycles = nvme_health.get("power_cycles", disk.power_cycles)
 
+            # Self-test log (ATA)
+            test_table = data.get("ata_smart_self_test_log", {}).get("standard", {}).get("table", [])
+            self._apply_test_log_json(disk, test_table)
+
         except Exception as exc:
             _LOGGER.error("JSON parse error for %s: %s", device, exc)
             disk.error = str(exc)
@@ -317,7 +349,69 @@ class SmartDataFetcher:
                     elif attr_id in (190, 194):
                         disk.temperature = raw_val
 
+        # Parse self-test log (text)
+        self._apply_test_log_text(disk, lines)
         return disk
+
+    # ------------------------------------------------------------------
+    # Self-test log parsers
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _apply_test_log_json(disk: "DiskSmartData", table: list) -> None:
+        """Parse JSON self-test log table."""
+        for entry in table:
+            test_type = entry.get("type", {}).get("string", "Unknown")
+            status = entry.get("status", {}).get("string", "Unknown")
+            lifetime = entry.get("lifetime_hours", 0)
+            remaining = entry.get("status", {}).get("remaining_percent", 0)
+            disk.test_log.append({
+                "type": test_type,
+                "result": status,
+                "lifetime_hours": lifetime,
+                "remaining_percent": remaining,
+            })
+        if disk.test_log:
+            first = disk.test_log[0]
+            disk.last_test_type = first["type"]
+            disk.last_test_result = first["result"]
+            disk.last_test_remaining = first["remaining_percent"]
+            # Derive a display date from lifetime hours (approximation)
+            disk.last_test_date = f"After {first['lifetime_hours']}h power-on"
+
+    @staticmethod
+    def _apply_test_log_text(disk: "DiskSmartData", lines: list[str]) -> None:
+        """Parse text self-test log section."""
+        import re as _re
+        in_log = False
+        for line in lines:
+            low = line.lower()
+            if "self-test log" in low and "num" in low:
+                in_log = True
+                continue
+            if in_log:
+                if not line.strip() or line.startswith("SMART"):
+                    in_log = False
+                    continue
+                # Example:  # 1  Short offline   Completed without error  00%  12345  -
+                m = _re.match(
+                    r"\s*#?\s*\d+\s+(Short|Extended|Conveyance|Short offline|Extended offline)\s+"
+                    r"(.+?)\s{2,}(\d+)%\s+(\d+)",
+                    line,
+                    _re.IGNORECASE,
+                )
+                if m:
+                    disk.test_log.append({
+                        "type": m.group(1).strip(),
+                        "result": m.group(2).strip(),
+                        "remaining_percent": int(m.group(3)),
+                        "lifetime_hours": int(m.group(4)),
+                    })
+        if disk.test_log and disk.last_test_type is None:
+            first = disk.test_log[0]
+            disk.last_test_type = first["type"]
+            disk.last_test_result = first["result"]
+            disk.last_test_remaining = first["remaining_percent"]
+            disk.last_test_date = f"After {first['lifetime_hours']}h power-on"
 
     # ------------------------------------------------------------------
     # Helpers
