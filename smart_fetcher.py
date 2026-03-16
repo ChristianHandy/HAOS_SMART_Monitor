@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+import shlex
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -94,7 +95,10 @@ class SmartDataFetcher:
         """Execute a command over SSH. Returns (stdout, stderr)."""
         if not self._client:
             raise RuntimeError("SSH client not connected")
-        _, stdout, stderr = self._client.exec_command(command, timeout=30)
+        # Wrap in a login shell so PATH and permissions are fully initialised.
+        # This is needed on Unraid/Proxmox where SSH exec sessions are non-login.
+        wrapped = f"bash -l -c {shlex.quote(command)}"
+        _, stdout, stderr = self._client.exec_command(wrapped, timeout=30)
         out = stdout.read().decode("utf-8", errors="replace")
         err = stderr.read().decode("utf-8", errors="replace")
         if err.strip():
