@@ -120,7 +120,6 @@ class DiskSensorBase(CoordinatorEntity[SmartMonitorCoordinator], SensorEntity):
             manufacturer=self._server_type.capitalize(),
             model=model,
             sw_version=disk.firmware if disk else None,
-            via_device=(DOMAIN, self._host),
         )
 
     @property

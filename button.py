@@ -1,11 +1,4 @@
-"""Button platform for SMART Disk Monitor.
-
-Provides per-disk buttons:
-  • Run Short Self-Test
-  • Run Long (Extended) Self-Test
-  • Run Conveyance Self-Test
-  • Download Full SMART Report
-"""
+"""Button platform for SMART Disk Monitor."""
 from __future__ import annotations
 
 import logging
@@ -37,7 +30,13 @@ async def async_setup_entry(
     host = entry.data[CONF_HOST]
     server_type = entry.data.get(CONF_SERVER_TYPE, "generic_linux")
 
+    _LOGGER.debug(
+        "smart_monitor button setup_entry called. coordinator.data=%s",
+        list(coordinator.data.keys()) if coordinator.data else None,
+    )
+
     def _make_buttons(device: str) -> list[ButtonEntity]:
+        _LOGGER.debug("Creating buttons for device %s on %s", device, host)
         return [
             RunTestButton(coordinator, entry, device, host, server_type, "short"),
             RunTestButton(coordinator, entry, device, host, server_type, "long"),
@@ -50,6 +49,7 @@ async def async_setup_entry(
     for device in devices:
         entities.extend(_make_buttons(device))
 
+    _LOGGER.debug("smart_monitor: adding %d button entities", len(entities))
     async_add_entities(entities)
 
     # Dynamically add buttons for disks that appear after the first poll
@@ -66,17 +66,18 @@ async def async_setup_entry(
         new_buttons: list[ButtonEntity] = []
         for dev in new_devices:
             new_buttons.extend(_make_buttons(dev))
+        _LOGGER.debug("smart_monitor: dynamically adding %d button entities", len(new_buttons))
         async_add_entities(new_buttons)
 
     entry.async_on_unload(coordinator.async_add_listener(_on_coordinator_update))
 
 
 # ---------------------------------------------------------------------------
-# Base – inherits CoordinatorEntity so HA tracks it properly
+# Base
 # ---------------------------------------------------------------------------
 
 class _DiskButtonBase(CoordinatorEntity[SmartMonitorCoordinator], ButtonEntity):
-    """Base button. Always available regardless of poll status."""
+    """Base button entity."""
 
     _attr_has_entity_name = True
 
@@ -95,18 +96,17 @@ class _DiskButtonBase(CoordinatorEntity[SmartMonitorCoordinator], ButtonEntity):
         self._server_type = server_type
         self._dev_slug = device.replace("/dev/", "").replace("/", "_")
 
-    # Buttons trigger SSH on demand — always available
     @property
     def available(self) -> bool:
         return True
 
     @property
     def device_info(self) -> DeviceInfo:
+        # No via_device — stand-alone device entry matching the sensors
         return DeviceInfo(
             identifiers={(DOMAIN, f"{self._host}_{self._dev_slug}")},
             name=f"{self._host} – {self._device}",
             manufacturer=self._server_type.capitalize(),
-            via_device=(DOMAIN, self._host),
         )
 
 
@@ -140,19 +140,20 @@ class RunTestButton(_DiskButtonBase):
 
     async def async_press(self) -> None:
         fetcher = self.coordinator.fetcher
-        device = self._device
         test_type = self._test_type
         hass = self.hass
 
-        _LOGGER.info("Starting %s SMART self-test on %s:%s", test_type, self._host, device)
+        _LOGGER.info("Starting %s SMART self-test on %s:%s", test_type, self._host, self._device)
 
         try:
-            output = await hass.async_add_executor_job(fetcher.run_test, device, test_type)
+            output = await hass.async_add_executor_job(
+                fetcher.run_test, self._device, test_type
+            )
         except Exception as exc:
             _LOGGER.error("Failed to start self-test: %s", exc)
             notify_create(
                 hass,
-                message=f"Failed to start **{test_type}** self-test on `{device}` ({self._host}):\n```\n{exc}\n```",
+                message=f"Failed to start **{test_type}** self-test on `{self._device}` ({self._host}):\n```\n{exc}\n```",
                 title="SMART Self-Test Error",
                 notification_id=f"smart_test_error_{self._host}_{self._dev_slug}",
             )
@@ -161,7 +162,8 @@ class RunTestButton(_DiskButtonBase):
         notify_create(
             hass,
             message=(
-                f"**{test_type.capitalize()} self-test** started on `{device}` ({self._host}).\n\n"
+                f"**{test_type.capitalize()} self-test** started on "
+                f"`{self._device}` ({self._host}).\n\n"
                 f"Expected duration: **{_TEST_DURATION[test_type]}**.\n\n"
                 f"<details><summary>Raw output</summary>\n\n```\n{output}\n```\n</details>"
             ),
@@ -195,26 +197,26 @@ class DownloadReportButton(_DiskButtonBase):
 
     async def async_press(self) -> None:
         fetcher = self.coordinator.fetcher
-        device = self._device
-        host = self._host
         hass = self.hass
 
-        _LOGGER.info("Downloading full SMART report for %s on %s", device, host)
+        _LOGGER.info("Downloading full SMART report for %s on %s", self._device, self._host)
 
         try:
-            report = await hass.async_add_executor_job(fetcher.download_report, device)
+            report = await hass.async_add_executor_job(
+                fetcher.download_report, self._device
+            )
         except Exception as exc:
             _LOGGER.error("Failed to download SMART report: %s", exc)
             notify_create(
                 hass,
-                message=f"Failed to download SMART report for `{device}` ({host}):\n```\n{exc}\n```",
+                message=f"Failed to download SMART report for `{self._device}` ({self._host}):\n```\n{exc}\n```",
                 title="SMART Report Error",
-                notification_id=f"smart_report_error_{host}_{self._dev_slug}",
+                notification_id=f"smart_report_error_{self._host}_{self._dev_slug}",
             )
             return
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        safe_host = host.replace(".", "_").replace(":", "_")
+        safe_host = self._host.replace(".", "_").replace(":", "_")
         filename = f"{safe_host}_{self._dev_slug}_{timestamp}.txt"
         filepath = os.path.join(REPORTS_DIR, filename)
 
@@ -230,12 +232,12 @@ class DownloadReportButton(_DiskButtonBase):
         notify_create(
             hass,
             message=(
-                f"**Full SMART Report** for `{device}` on `{host}`\n\n"
+                f"**Full SMART Report** for `{self._device}` on `{self._host}`\n\n"
                 f"{saved_msg}\n\n"
                 f"<details><summary>Report preview</summary>\n\n```\n{preview}\n```\n</details>"
             ),
-            title=f"SMART Report: {device} @ {host}",
-            notification_id=f"smart_report_{host}_{self._dev_slug}",
+            title=f"SMART Report: {self._device} @ {self._host}",
+            notification_id=f"smart_report_{self._host}_{self._dev_slug}",
         )
 
 

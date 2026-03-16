@@ -29,6 +29,7 @@ PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.B
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up SMART Disk Monitor from a config entry."""
+    _LOGGER.debug("smart_monitor: async_setup_entry called, platforms=%s", PLATFORMS)
     data = entry.data
 
     fetcher = SmartDataFetcher(
