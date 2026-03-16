@@ -121,7 +121,6 @@ class DiskSensorBase(CoordinatorEntity[SmartMonitorCoordinator], SensorEntity):
             model=model,
             sw_version=disk.firmware if disk else None,
             via_device=(DOMAIN, self._host),
-            configuration_url=f"ssh://{self._host}",
         )
 
     @property
