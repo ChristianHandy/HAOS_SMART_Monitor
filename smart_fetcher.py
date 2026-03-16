@@ -62,6 +62,7 @@ class SmartDataFetcher:
         self.ssh_key_path = ssh_key_path
         self.server_type = server_type
         self._client: paramiko.SSHClient | None = None
+        self._smartctl_path: str = "smartctl"  # resolved on first connect
 
     def connect(self) -> None:
         """Establish SSH connection."""
@@ -89,22 +90,36 @@ class SmartDataFetcher:
             self._client.close()
             self._client = None
 
-    def _exec(self, command: str) -> str:
-        """Execute a command over SSH and return stdout."""
+    def _exec(self, command: str) -> tuple[str, str]:
+        """Execute a command over SSH. Returns (stdout, stderr)."""
         if not self._client:
             raise RuntimeError("SSH client not connected")
         _, stdout, stderr = self._client.exec_command(command, timeout=30)
         out = stdout.read().decode("utf-8", errors="replace")
         err = stderr.read().decode("utf-8", errors="replace")
-        if err:
-            _LOGGER.debug("SSH stderr for '%s': %s", command, err)
-        return out
+        if err.strip():
+            _LOGGER.debug("SSH stderr for '%s': %s", command, err.strip())
+        return out, err
+
+    def _find_smartctl(self) -> str:
+        """Find the full path to smartctl on the remote host."""
+        out, _ = self._exec("which smartctl || command -v smartctl || find /usr /sbin /bin -name smartctl 2>/dev/null | head -1")
+        path = out.strip().splitlines()[0].strip() if out.strip() else ""
+        if path:
+            _LOGGER.debug("Found smartctl at: %s", path)
+            return path
+        # Common locations as fallback
+        for p in ("/usr/sbin/smartctl", "/sbin/smartctl", "/usr/bin/smartctl"):
+            chk, _ = self._exec(f"test -x {p} && echo yes")
+            if chk.strip() == "yes":
+                return p
+        _LOGGER.warning("smartctl not found on %s — install smartmontools", self.host)
+        return "smartctl"  # last resort, let it fail with a clear error
 
     def list_disks(self) -> list[str]:
         """List block devices on the remote server."""
         try:
-            # Try lsblk JSON output first
-            out = self._exec(
+            out, _ = self._exec(
                 "lsblk -d -o NAME,TYPE --json 2>/dev/null || "
                 "lsblk -d -n -o NAME,TYPE 2>/dev/null"
             )
@@ -125,6 +140,7 @@ class SmartDataFetcher:
                         if name and not name.startswith("loop"):
                             devices.append(f"/dev/{name}")
 
+            _LOGGER.debug("list_disks on %s: %s", self.host, devices)
             return devices
         except Exception as exc:
             _LOGGER.warning("Failed to list disks on %s: %s", self.host, exc)
@@ -134,49 +150,53 @@ class SmartDataFetcher:
         """Fetch and parse SMART data for a single device."""
         disk = DiskSmartData(device=device)
         try:
+            smartctl = self._smartctl_path
             # Try JSON output first (smartctl >= 7.0)
-            # Use sudo only if not already root; Unraid/Proxmox default to root
-            prefix = "" if self.username == "root" else "sudo "
-            json_out = self._exec(f"{prefix}smartctl -a --json=c {device} 2>/dev/null")
+            json_out, json_err = self._exec(f"{smartctl} -a --json=c {device} 2>&1")
+            _LOGGER.debug("smartctl JSON output for %s (first 200 chars): %s", device, json_out[:200])
             if json_out.strip().startswith("{"):
                 disk = self._parse_smartctl_json(device, json_out)
             else:
-                text_out = self._exec(f"{prefix}smartctl -a {device} 2>/dev/null")
-                disk = self._parse_smartctl_text(device, text_out)
+                _LOGGER.debug("No JSON output for %s, falling back to text. stderr: %s", device, json_err[:200])
+                text_out, text_err = self._exec(f"{smartctl} -a {device} 2>&1")
+                _LOGGER.debug("smartctl text output for %s (first 200 chars): %s", device, text_out[:200])
+                if text_out.strip():
+                    disk = self._parse_smartctl_text(device, text_out)
+                else:
+                    disk.error = f"No output from smartctl. stderr: {json_err or text_err}"
+                    _LOGGER.error("smartctl returned no output for %s on %s: %s", device, self.host, disk.error)
         except Exception as exc:
             _LOGGER.error("Error reading SMART data for %s on %s: %s", device, self.host, exc)
             disk.error = str(exc)
         return disk
 
     def run_test(self, device: str, test_type: str = "short") -> str:
-        """Start a SMART self-test on the device.
-
-        test_type: 'short' | 'long' | 'conveyance'
-        Returns the raw smartctl output (status message).
-        """
+        """Start a SMART self-test on the device."""
         try:
             self.connect()
-            prefix = "" if self.username == "root" else "sudo "
-            out = self._exec(f"{prefix}smartctl -t {test_type} {device} 2>&1")
+            self._smartctl_path = self._find_smartctl()
+            out, err = self._exec(f"{self._smartctl_path} -t {test_type} {device} 2>&1")
         finally:
             self.disconnect()
-        return out
+        return out or err
 
     def download_report(self, device: str) -> str:
         """Return the full smartctl -x output as a string for download."""
         try:
             self.connect()
-            prefix = "" if self.username == "root" else "sudo "
-            out = self._exec(f"{prefix}smartctl -x {device} 2>&1")
+            self._smartctl_path = self._find_smartctl()
+            out, err = self._exec(f"{self._smartctl_path} -x {device} 2>&1")
         finally:
             self.disconnect()
-        return out
+        return out or err
 
     def fetch_all_disks(self) -> dict[str, DiskSmartData]:
         """Connect, fetch all disks, disconnect, return results."""
         results: dict[str, DiskSmartData] = {}
         try:
             self.connect()
+            self._smartctl_path = self._find_smartctl()
+            _LOGGER.info("Using smartctl: %s on %s", self._smartctl_path, self.host)
             devices = self.list_disks()
             _LOGGER.debug("Found %d disks on %s: %s", len(devices), self.host, devices)
             for dev in devices:
