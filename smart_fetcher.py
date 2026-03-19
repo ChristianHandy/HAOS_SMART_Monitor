@@ -26,21 +26,30 @@ class DiskSmartData:
     disk_type: str = "HDD"  # HDD, SSD, NVMe
     health: str = HEALTH_UNKNOWN
     temperature: int | None = None
+    temperature_max: int | None = None
     power_on_hours: int | None = None
     power_cycles: int | None = None
     reallocated_sectors: int | None = None
     pending_sectors: int | None = None
     uncorrectable_sectors: int | None = None
+    # Extended SMART attributes
+    seek_error_rate: int | None = None
+    spin_retry_count: int | None = None
+    command_timeout: int | None = None
+    udma_crc_errors: int | None = None
+    write_error_rate: int | None = None
+    ssd_life_left: int | None = None        # attr 231 or NVMe available_spare
+    wear_leveling: int | None = None        # attr 177
     smart_attributes: dict[str, Any] = field(default_factory=dict)
     nvme_attributes: dict[str, Any] = field(default_factory=dict)
     raw_output: str = ""
     error: str | None = None
     # Self-test log
-    last_test_type: str | None = None       # "Short", "Extended", "Conveyance"
-    last_test_result: str | None = None     # "Completed without error", "Failed", …
-    last_test_date: str | None = None       # ISO-8601 string or human-readable
-    last_test_remaining: int | None = None  # % remaining (0 = done)
-    test_log: list[dict[str, Any]] = field(default_factory=list)  # up to 21 entries
+    last_test_type: str | None = None
+    last_test_result: str | None = None
+    last_test_date: str | None = None
+    last_test_remaining: int | None = None
+    test_log: list[dict[str, Any]] = field(default_factory=list)
 
 
 class SmartDataFetcher:
@@ -170,7 +179,7 @@ class SmartDataFetcher:
         try:
             smartctl = self._smartctl_path
             json_out, json_err = self._exec(f"{smartctl} -a --json=c {device} 2>&1")
-            _LOGGER.warning(
+            _LOGGER.debug(
                 "smartctl output for %s on %s (first 300): %r err: %r",
                 device, self.host, json_out[:300], json_err[:300],
             )
@@ -240,9 +249,9 @@ class SmartDataFetcher:
         try:
             self.connect()
             self._smartctl_path = self._find_smartctl()
-            _LOGGER.warning("smart_monitor: using smartctl=%s on %s", self._smartctl_path, self.host)
+            _LOGGER.info("smart_monitor: using smartctl=%s on %s", self._smartctl_path, self.host)
             devices = self.list_disks()
-            _LOGGER.warning("smart_monitor: found disks on %s: %s", self.host, devices)
+            _LOGGER.info("smart_monitor: found disks on %s: %s", self.host, devices)
             for dev in devices:
                 results[dev] = self.get_smart_data(dev)
         except Exception as exc:
@@ -316,6 +325,20 @@ class SmartDataFetcher:
                     disk.uncorrectable_sectors = raw_val
                 elif attr_id in (190, 194) and disk.temperature is None:
                     disk.temperature = raw_val
+                elif attr_id == 7:
+                    disk.seek_error_rate = raw_val
+                elif attr_id == 10:
+                    disk.spin_retry_count = raw_val
+                elif attr_id == 188:
+                    disk.command_timeout = raw_val
+                elif attr_id == 199:
+                    disk.udma_crc_errors = raw_val
+                elif attr_id in (1, 2):
+                    disk.write_error_rate = raw_val
+                elif attr_id == 231:
+                    disk.ssd_life_left = raw_val
+                elif attr_id == 177:
+                    disk.wear_leveling = raw_val
 
             # NVMe attributes
             nvme_health = data.get("nvme_smart_health_information_log", {})
@@ -333,6 +356,8 @@ class SmartDataFetcher:
                     disk.temperature = nvme_health["temperature"]
                 disk.power_on_hours = nvme_health.get("power_on_hours", disk.power_on_hours)
                 disk.power_cycles = nvme_health.get("power_cycles", disk.power_cycles)
+                if "available_spare" in nvme_health:
+                    disk.ssd_life_left = nvme_health["available_spare"]
 
             # Self-test log (ATA)
             test_table = data.get("ata_smart_self_test_log", {}).get("standard", {}).get("table", [])

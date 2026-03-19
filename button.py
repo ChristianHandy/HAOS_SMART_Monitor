@@ -15,6 +15,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN, CONF_HOST, CONF_SERVER_TYPE
 from .coordinator import SmartMonitorCoordinator
+from .sensor import _device_display_name, _manufacturer_from_model
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -102,11 +103,13 @@ class _DiskButtonBase(CoordinatorEntity[SmartMonitorCoordinator], ButtonEntity):
 
     @property
     def device_info(self) -> DeviceInfo:
-        # No via_device — stand-alone device entry matching the sensors
+        disk_data = self.coordinator.data.get(self._device) if self.coordinator.data else None
+        name = _device_display_name(disk_data, self._device)
+        manufacturer = _manufacturer_from_model(disk_data.model if disk_data else "Unknown")
         return DeviceInfo(
             identifiers={(DOMAIN, f"{self._host}_{self._dev_slug}")},
-            name=f"{self._host} – {self._device}",
-            manufacturer=self._server_type.capitalize(),
+            name=name,
+            manufacturer=manufacturer,
         )
 
 

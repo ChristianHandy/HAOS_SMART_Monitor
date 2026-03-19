@@ -14,6 +14,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import DOMAIN, CONF_HOST, CONF_SERVER_TYPE, HEALTH_FAILED
 from .coordinator import SmartMonitorCoordinator
 from .smart_fetcher import DiskSmartData
+from .sensor import _device_display_name, _manufacturer_from_model
 
 
 async def async_setup_entry(
@@ -71,9 +72,14 @@ class _DiskBinarySensorBase(CoordinatorEntity[SmartMonitorCoordinator], BinarySe
     @property
     def device_info(self) -> DeviceInfo:
         disk = self._disk_data
+        name = _device_display_name(disk, self._device)
+        manufacturer = _manufacturer_from_model(disk.model if disk else "Unknown")
         return DeviceInfo(
             identifiers={(DOMAIN, f"{self._host}_{self._dev_slug}")},
-            name=f"{self._host} – {self._device}",
+            name=name,
+            manufacturer=manufacturer,
+            model=disk.model if disk else None,
+            serial_number=disk.serial if (disk and disk.serial != "Unknown") else None,
         )
 
     @property

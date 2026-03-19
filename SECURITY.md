@@ -113,14 +113,4 @@ Treat these files as sensitive and do not share them publicly. The `/config/smar
 |---|---|
 | 1.2.0 | Removed `ssh://` from device registry (was rejected by HA, no security impact) |
 | 1.1.x | Fixed `via_device` references that caused silent entity registration failures |
-| 1.0.0 | Initial release |# Security Policy
-
-## Supported Versions
-
-| Version | Supported          |
-| ------- | ------------------ |
-| = 1.2.0   | :white_check_mark: 
-| < 1.1.9   | :x:                |
-
-## Reporting a Vulnerability
-
+| 1.0.0 | Initial release |
