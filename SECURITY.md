@@ -1,116 +1,85 @@
 # Security Policy
 
-## Supported Versions
+## Supported versions
 
-Only the latest release receives security fixes. Please update to the latest version before reporting a vulnerability.
+Only the latest release receives security fixes.
 
 | Version | Supported |
 |---------|-----------|
-| 1.2.x   | ✅ Yes |
-| < 1.2   | ❌ No  |
+| 2.x     | ✅ Yes |
+| < 2.0   | ❌ No  |
 
----
-
-## Reporting a Vulnerability
+## Reporting a vulnerability
 
 **Please do not report security vulnerabilities through public GitHub issues.**
 
-Instead, open a [GitHub Security Advisory](../../security/advisories/new) or send a private message to the repository owner. Include as much detail as possible:
+Open a [GitHub security advisory](../../security/advisories/new) instead.
+Include a description, steps to reproduce, the impact and, if you have one, a
+suggested fix. You can expect an acknowledgement within 48 hours and a fix or
+mitigation plan within 7 days for critical issues.
 
-- A description of the vulnerability
-- Steps to reproduce
-- Potential impact
-- Suggested fix (if any)
+## Security model
 
-You can expect an acknowledgement within **48 hours** and a fix or mitigation plan within **7 days** for critical issues.
+The integration logs in to your servers over SSH and runs smartctl.
 
----
+### Host key verification
 
-## Security Considerations
+When a host is added, the integration fetches its SSH host key without
+logging in and shows the SHA256 fingerprint. Credentials are only sent after
+you confirm it. The key is stored with the config entry and every later
+connection must present the same key; if it changes, the integration stops
+and starts reauthentication, which shows the new fingerprint and a warning.
 
-This integration connects Home Assistant to remote machines over SSH. Understanding the security model helps you deploy it safely.
+Versions before 2.0 accepted any host key (`AutoAddPolicy`).
 
-### SSH Credentials
+### Credentials
 
-- Credentials (username, password, or SSH key path) are stored in Home Assistant's config entry storage at `/config/.storage/core.config_entries`
-- This file is readable by anyone with access to your HA filesystem — **secure your HA instance accordingly**
-- Prefer **SSH key authentication** over passwords where possible
-- Use a **dedicated low-privilege user** with only the permissions needed (see below) rather than `root`
+- The password or private key is stored in Home Assistant's config entry
+  storage (`/config/.storage/core.config_entries`), like the credentials of
+  every other integration. Protect access to your Home Assistant files.
+- Private keys must be unencrypted; use a key made for this purpose.
+- The SSH agent, `~/.ssh/config` and default key files of the Home Assistant
+  host are never used.
+- Diagnostics remove the host, user name, password, private key, host key,
+  serial numbers and WWNs.
 
-### Principle of Least Privilege
+### Least privilege
 
-The integration only needs to run `smartctl` on the remote machine. You can lock it down to exactly that:
+Prefer a dedicated user that may only run smartctl through sudo:
 
 ```bash
-# Create a dedicated user
-useradd -r -s /bin/bash ha-smart
-
-# Allow only smartctl — nothing else
-echo 'ha-smart ALL=(ALL) NOPASSWD: /usr/sbin/smartctl' > /etc/sudoers.d/ha-smart
+useradd -r -m -s /bin/sh ha-smart
+echo 'ha-smart ALL=(root) NOPASSWD: /usr/sbin/smartctl' > /etc/sudoers.d/ha-smart
 chmod 440 /etc/sudoers.d/ha-smart
-
-# Add to disk group (alternative to sudo on some systems)
-usermod -aG disk ha-smart
 ```
 
-Use `ha-smart` as the username in the HA integration config instead of `root`.
+and enable **Run smartctl with sudo**. smartctl can start and abort
+self-tests, which the integration offers as buttons; it cannot write data.
 
-### SSH Key Hardening
+### Commands run on the host
 
-If using key-based authentication, restrict what the key can do on the server side:
+Every command runs through `sh -c` with all arguments quoted. Device paths
+and types come from `smartctl --scan-open`, `lsblk`, or the **Devices**
+option, which only accepts a path plus a device type made of letters, digits
+and `,+_-`.
 
-```
-# ~/.ssh/authorized_keys on the remote server
-restrict,command="/usr/sbin/smartctl" ssh-ed25519 AAAA... home-assistant
-```
-
-> Note: The `command=` restriction limits the key to a single command. This is the most secure option but means the integration cannot run `lsblk` to auto-discover disks — you would need to manually specify devices. For most home users the disk group + sudo approach is a reasonable balance.
-
-### What the Integration Does Over SSH
-
-The integration executes only these commands on the remote machine:
-
-| Command | Purpose |
+| Command | When |
 |---|---|
-| `lsblk -d -o NAME,TYPE --json` | Discover block devices |
-| `smartctl -a --json=c /dev/sdX` | Read SMART data |
-| `smartctl -a /dev/sdX` | Fallback text read |
-| `smartctl -t short\|long\|conveyance /dev/sdX` | Start a self-test (button press only) |
-| `smartctl -x /dev/sdX` | Full report (button press only) |
-| `which smartctl` | Locate smartctl binary |
+| `hostname`, `uname -s`, `uname -r`, `cat /etc/os-release`, `/etc/unraid-version`, `pveversion` | Once at setup, to name the host |
+| `smartctl --version` | Setup |
+| `smartctl --scan-open --json=c` | Every update, unless devices are set |
+| `lsblk -d -J -o NAME,TYPE` | When the scan finds nothing |
+| `smartctl --json=c -a [-n standby] [-d TYPE] DEVICE` | Every update, per disk |
+| `smartctl -t short\|long\|conveyance [-d TYPE] DEVICE` | Self-test button |
+| `smartctl -X [-d TYPE] DEVICE` | Abort self-test button |
 
-No files are written to the remote machine. No other commands are executed.
+With sudo enabled, `smartctl` is run as `sudo -n smartctl`. Nothing is
+written to the host.
 
-### Network Security
-
-- All communication is encrypted via SSH
-- The integration uses `paramiko` and accepts the remote host key on first connection (`AutoAddPolicy`) — this is convenient but means the first connection is vulnerable to a man-in-the-middle attack on untrusted networks
-- For production use on untrusted networks, manually add the host key to your HA `known_hosts` file and switch to `RejectPolicy`
-
-### Report Saved to Disk
-
-When the **Download SMART Report** button is pressed, the full `smartctl -x` output is saved to `/config/smart_reports/` inside the HA container. These files may contain:
-
-- Disk serial numbers
-- Firmware versions
-- Full SMART attribute history
-
-Treat these files as sensitive and do not share them publicly. The `/config/smart_reports/` directory is not exposed by default but is accessible via the HA file editor and Samba shares if those are enabled.
-
----
-
-## Known Limitations
-
-- **Host key verification** is currently set to `AutoAddPolicy` (trust on first connect). A future version will support strict host key checking.
-- **Credentials are stored in plaintext** within HA's config storage. This is consistent with how all HA integrations store credentials and is protected by HA's overall security model.
-- The integration has **no rate limiting** on button presses — running a long self-test repeatedly could theoretically stress a degraded disk. Use the long self-test button with care on disks already showing errors.
-
----
-
-## Changelog of Security-Relevant Changes
+## Security-relevant changes
 
 | Version | Change |
 |---|---|
-| 1.2.0 | Removed `ssh://` from device registry (was rejected by HA, no security impact) |
-| 1.1.x | Fixed `via_device` references that caused silent entity registration failures |
+| 2.0.0 | SSH host keys are confirmed and pinned; credentials are only sent to a confirmed host. Private keys are stored instead of read from a path. Commands are quoted. The report button that wrote files to `/config/smart_reports/` was removed. |
+| 1.2.0 | Removed `ssh://` from the device registry |
 | 1.0.0 | Initial release |

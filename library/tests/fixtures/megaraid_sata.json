@@ -1,0 +1,26 @@
+{
+  "json_format_version": [1, 0],
+  "smartctl": {"version": [7, 4], "exit_status": 4, "messages": [{"string": "Warning! SMART Attribute Data Structure error: invalid SMART checksum.", "severity": "warning"}]},
+  "device": {"name": "/dev/bus/0", "info_name": "/dev/bus/0 [megaraid_disk_02] [SAT]", "type": "sat+megaraid,2", "protocol": "ATA"},
+  "model_family": "Seagate Exos 7E8",
+  "model_name": "ST4000NM0035-1V4107",
+  "serial_number": "ZC1A2B3C",
+  "wwn": {"naa": 5, "oui": 3152, "id": 2712891412},
+  "firmware_version": "TNA5",
+  "user_capacity": {"blocks": 7814037168, "bytes": 4000787030016},
+  "logical_block_size": 512,
+  "rotation_rate": 7200,
+  "smart_status": {"passed": true},
+  "ata_smart_data": {"capabilities": {"self_tests_supported": true, "conveyance_self_test_supported": false}},
+  "ata_smart_attributes": {
+    "table": [
+      {"id": 5, "name": "Reallocated_Sector_Ct", "value": 100, "worst": 100, "thresh": 10, "when_failed": "", "flags": {"prefailure": true}, "raw": {"value": 8}},
+      {"id": 9, "name": "Power_On_Hours", "value": 60, "worst": 60, "thresh": 0, "when_failed": "", "flags": {"prefailure": false}, "raw": {"value": 35500}},
+      {"id": 188, "name": "Command_Timeout", "value": 100, "worst": 99, "thresh": 0, "when_failed": "", "flags": {"prefailure": false}, "raw": {"value": 4295032833}},
+      {"id": 197, "name": "Current_Pending_Sector", "value": 100, "worst": 100, "thresh": 0, "when_failed": "", "flags": {"prefailure": false}, "raw": {"value": 0}}
+    ]
+  },
+  "power_on_time": {"hours": 35500},
+  "power_cycle_count": 40,
+  "temperature": {"current": 29}
+}

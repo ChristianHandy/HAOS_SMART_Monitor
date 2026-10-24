@@ -1,0 +1,4 @@
+/dev/sda -d sat # /dev/sda [SAT], ATA device
+/dev/bus/0 -d megaraid,2 # /dev/bus/0 [megaraid_disk_02], SCSI device
+# /dev/sdg -d scsi # /dev/sdg, SCSI device open failed: INQUIRY failed
+/dev/nvme0 -d nvme # /dev/nvme0, NVMe device

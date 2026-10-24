@@ -1,0 +1,21 @@
+{
+  "json_format_version": [1, 0],
+  "smartctl": {"version": [7, 4], "exit_status": 24},
+  "device": {"name": "/dev/sdd", "info_name": "/dev/sdd [SAT]", "type": "sat", "protocol": "ATA"},
+  "model_name": "ST2000DM001-1CH164",
+  "serial_number": "Z1E12345",
+  "firmware_version": "CC26",
+  "user_capacity": {"blocks": 3907029168, "bytes": 2000398934016},
+  "rotation_rate": 7200,
+  "smart_status": {"passed": false},
+  "ata_smart_attributes": {
+    "table": [
+      {"id": 5, "name": "Reallocated_Sector_Ct", "value": 5, "worst": 5, "thresh": 36, "when_failed": "now", "flags": {"prefailure": true}, "raw": {"value": 3912}},
+      {"id": 197, "name": "Current_Pending_Sector", "value": 100, "worst": 100, "thresh": 0, "when_failed": "", "flags": {"prefailure": false}, "raw": {"value": 48}},
+      {"id": 198, "name": "Offline_Uncorrectable", "value": 100, "worst": 100, "thresh": 0, "when_failed": "", "flags": {"prefailure": false}, "raw": {"value": 48}}
+    ]
+  },
+  "ata_smart_self_test_log": {"standard": {"table": [
+    {"type": {"value": 1, "string": "Short offline"}, "status": {"value": 116, "string": "Completed: read failure", "remaining_percent": 40, "passed": false}, "lifetime_hours": 22000}
+  ]}}
+}

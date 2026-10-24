@@ -1,0 +1,33 @@
+{
+  "json_format_version": [1, 0],
+  "smartctl": {"version": [7, 3], "exit_status": 0},
+  "device": {"name": "/dev/sdb", "info_name": "/dev/sdb [SAT]", "type": "sat", "protocol": "ATA"},
+  "model_family": "Samsung based SSDs",
+  "model_name": "Samsung SSD 870 EVO 1TB",
+  "serial_number": "S6PTNM0R123456A",
+  "wwn": {"naa": 5, "oui": 9528, "id": 64011775170},
+  "firmware_version": "SVT02B6Q",
+  "user_capacity": {"blocks": 1953525168, "bytes": 1000204886016},
+  "logical_block_size": 512,
+  "rotation_rate": 0,
+  "smart_status": {"passed": true},
+  "ata_smart_data": {
+    "self_test": {"status": {"value": 249, "string": "in progress, 90% remaining", "remaining_percent": 90}},
+    "capabilities": {"self_tests_supported": true, "conveyance_self_test_supported": false}
+  },
+  "ata_smart_attributes": {
+    "table": [
+      {"id": 5, "name": "Reallocated_Sector_Ct", "value": 100, "worst": 100, "thresh": 10, "when_failed": "", "flags": {"prefailure": true}, "raw": {"value": 0}},
+      {"id": 9, "name": "Power_On_Hours", "value": 98, "worst": 98, "thresh": 0, "when_failed": "", "flags": {"prefailure": false}, "raw": {"value": 8012}},
+      {"id": 12, "name": "Power_Cycle_Count", "value": 99, "worst": 99, "thresh": 0, "when_failed": "", "flags": {"prefailure": false}, "raw": {"value": 112}},
+      {"id": 177, "name": "Wear_Leveling_Count", "value": 97, "worst": 97, "thresh": 0, "when_failed": "", "flags": {"prefailure": true}, "raw": {"value": 21}},
+      {"id": 187, "name": "Uncorrectable_Error_Cnt", "value": 100, "worst": 100, "thresh": 0, "when_failed": "", "flags": {"prefailure": false}, "raw": {"value": 0}},
+      {"id": 190, "name": "Airflow_Temperature_Cel", "value": 69, "worst": 52, "thresh": 0, "when_failed": "", "flags": {"prefailure": false}, "raw": {"value": 31}},
+      {"id": 241, "name": "Total_LBAs_Written", "value": 99, "worst": 99, "thresh": 0, "when_failed": "", "flags": {"prefailure": false}, "raw": {"value": 39062500000}}
+    ]
+  },
+  "power_on_time": {"hours": 8012},
+  "power_cycle_count": 112,
+  "temperature": {"current": 31},
+  "ata_smart_self_test_log": {"standard": {"table": []}}
+}

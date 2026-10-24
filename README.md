@@ -1,282 +1,287 @@
-# SMART Disk Monitor – Home Assistant Integration
+# SMART Disk Monitor for Home Assistant
 
-Monitor SMART health data from all disks on remote servers (**Unraid**, **Proxmox**, **generic Linux**, **desktop Ubuntu**) directly in Home Assistant via SSH.
+Monitor the SMART health of the disks in your servers from Home Assistant.
+The integration logs in over SSH, runs
+[smartmontools](https://www.smartmontools.org/) `smartctl` and creates a
+device with sensors for every disk: health, temperature, wear, error counters
+and self-tests.
 
----
+It works with Unraid, Proxmox VE, TrueNAS SCALE, Debian/Ubuntu and other
+Linux or FreeBSD servers, including enterprise hardware: SAS disks, disks
+behind MegaRAID/PERC and HP Smart Array controllers, and NVMe drives.
+
+> [!IMPORTANT]
+> Version 2.0 is a rewrite that prepares the integration for inclusion in
+> Home Assistant core. See [Upgrading from 1.x](#upgrading-from-1x).
+
+## Contents
+
+- [Features](#features)
+- [Supported hardware and test status](#supported-hardware-and-test-status)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Entities](#entities)
+- [Dashboard card](#dashboard-card)
+- [Automation examples](#automation-examples)
+- [Security](#security)
+- [Troubleshooting](#troubleshooting)
+- [Upgrading from 1.x](#upgrading-from-1x)
+- [Development](#development)
 
 ## Features
 
-- ✅ Connects to remote servers via **SSH** (password or key-based auth)
-- 🖴 Auto-discovers all block devices (`/dev/sda`, `/dev/nvme0n1`, …)
-- 📊 Creates sensors for every disk:
-  - Health status (PASSED / FAILED / UNKNOWN)
-  - Temperature (°C)
-  - Power-on hours
-  - Power cycles
-  - Reallocated sectors *(HDD/SSD)*
-  - Pending sectors *(HDD/SSD)*
-  - Uncorrectable sectors *(HDD/SSD)*
-  - Available spare, % used, media errors *(NVMe)*
-  - Last self-test result and date
-- 🔘 Buttons per disk:
-  - **Run Short Self-Test** (~2 min)
-  - **Run Long Self-Test** (thorough, hours)
-  - **Run Conveyance Self-Test** (~5 min)
-  - **Download SMART Report** (saves full report to `/config/smart_reports/`)
-- 🔔 Binary sensors for instant alerts:
-  - **Health Problem** – fires when `smartctl` reports FAILED
-  - **Sector Problem** – fires when bad/pending/uncorrectable sectors > 0
-- Supports **HDD**, **SSD**, and **NVMe** drives
-- Configurable poll interval (default: 5 minutes)
-- Multiple servers supported (add one entry per server)
+- One device per host, with one device per disk underneath it
+- Finds disks with `smartctl --scan-open`, including disks behind RAID
+  controllers, and falls back to `lsblk`
+- Disks smartctl cannot scan, such as disks behind an HP Smart Array, can be
+  listed by hand (`/dev/sg0 cciss,0`)
+- Does not wake up sleeping disks: their last values are kept and a
+  **Standby** sensor shows they are asleep
+- Start and abort short, long and conveyance self-tests
+- Works with a non-root user through `sudo -n smartctl`
+- Password or private key login; the SSH host key is confirmed when the host
+  is added and checked on every connection
+- Diagnostics download with serial numbers and credentials removed
+- Reauthentication when the password or host key changes, and
+  reconfiguration of the address, port, user and sudo setting
 
----
+## Supported hardware and test status
+
+> [!WARNING]
+> **Not every connection type has been tested against real hardware.**
+> Every disk type below is covered by automated tests that run the parsers on
+> sample `smartctl` output and the SSH client against a simulated SSH server.
+> That proves the code handles the documented output formats, not that every
+> controller, firmware or operating system produces exactly that output.
+> Version 2.0 has **not yet been run against real hardware** at all; the 1.x
+> releases were used on Unraid, Proxmox VE and Ubuntu with SATA and NVMe
+> disks.
+>
+> If you run it on hardware marked untested, please
+> [open an issue](https://github.com/ChristianHandy/HAOS_SMART_Monitor/issues)
+> with the result and, if something is wrong, the output of
+> `smartctl --json -a <device>` (remove serial numbers if you like).
+
+| Hardware or setup | How smartctl reaches it | Automated tests | Tested on real hardware |
+|---|---|---|---|
+| SATA hard disk | `-d sat` | ✅ | ⚠️ 1.x only |
+| SATA SSD | `-d sat` | ✅ | ⚠️ 1.x only |
+| NVMe SSD | `-d nvme` | ✅ | ⚠️ 1.x only |
+| SAS hard disk or SSD | `-d scsi` | ✅ | ❌ Not yet |
+| Disk behind LSI MegaRAID / Dell PERC | `-d megaraid,N` | ✅ | ❌ Not yet |
+| Disk behind HP Smart Array (manual) | `-d cciss,N` | ✅ (parsing) | ❌ Not yet |
+| Areca, 3ware, Adaptec (aacraid) | `-d areca,N`, `-d 3ware,N`, `-d aacraid,…` | ⚠️ Same code path, no sample output | ❌ Not yet |
+| USB enclosure / bridge | `-d sat` and others | ✅ (no SMART reported) | ❌ Not yet |
+| Multipath SAS (one disk, two paths) | — | ✅ (shown once) | ❌ Not yet |
+| smartctl 6.x without JSON | text output | ✅ | ❌ Not yet |
+| Unraid, Proxmox VE, Debian/Ubuntu host | SSH | ✅ (simulated) | ⚠️ 1.x only |
+| TrueNAS SCALE, Synology DSM, FreeBSD / TrueNAS CORE | SSH | ✅ (simulated) | ❌ Not yet |
+| Password, private key, sudo | SSH | ✅ (simulated SSH server) | ❌ Not yet |
+
+Hardware RAID volumes themselves (for example `/dev/sda` on a PERC) are not
+disks and report no SMART data; the physical disks behind the controller are
+shown instead when the controller supports pass-through.
 
 ## Requirements
 
-### Home Assistant side
-- Home Assistant **2023.6+**
-- Python package `paramiko` (installed automatically via `requirements`)
+**Home Assistant** 2026.10 or newer.
 
-### Remote server side
-- SSH access enabled
-- `smartmontools` installed (see per-OS instructions below)
+**On every monitored host:**
 
----
+- An SSH server you can log in to with a password or a private key
+- smartmontools 7.0 or newer (6.x works with fewer details)
+- Either the `root` user, or a user that may run smartctl with
+  `sudo` without a password:
 
-## Server Setup by OS
+  ```bash
+  sudo apt install smartmontools
+  echo 'ha-smart ALL=(root) NOPASSWD: /usr/sbin/smartctl' | sudo tee /etc/sudoers.d/ha-smart
+  sudo chmod 440 /etc/sudoers.d/ha-smart
+  ```
 
-> ⚠️ **This is the most important section.** Skipping these steps is the most common reason sensors show "Unknown".
+  Then enable **Run smartctl with sudo** when you add the host.
 
-### Unraid
-
-smartmontools is pre-installed and SSH runs as `root` — no extra setup needed.
-
-```
-Username: root
-Password: your Unraid root password
-```
-
-### Proxmox
-
-smartmontools is pre-installed and SSH runs as `root` — no extra setup needed.
-
-```
-Username: root
-Password: your Proxmox root password
-```
-
-### Debian / Ubuntu Server (headless)
-
-```bash
-# Install smartmontools
-apt install smartmontools
-
-# Option A — connect as root (simplest)
-# Make sure PermitRootLogin is enabled in /etc/ssh/sshd_config
-
-# Option B — connect as a regular user, grant sudo access to smartctl
-echo 'YOUR_USER ALL=(ALL) NOPASSWD: /usr/sbin/smartctl' > /etc/sudoers.d/smart-monitor
-chmod 440 /etc/sudoers.d/smart-monitor
-```
-
-### Ubuntu Desktop (most involved — read carefully)
-
-Ubuntu Desktop has **AppArmor** enabled and regular users are not in the `disk` group by default. Both issues must be fixed for smartctl to access disk devices over SSH.
-
-**Step 1 — Install smartmontools**
-```bash
-sudo apt install smartmontools
-```
-
-**Step 2 — Add your SSH user to the `disk` group**
-```bash
-sudo usermod -aG disk YOUR_USERNAME
-```
-
-**Step 3 — Fix AppArmor** so smartctl can open block devices in SSH sessions
-```bash
-sudo aa-complain /usr/sbin/smartctl
-```
-
-Or create a local override (more precise than complain mode):
-```bash
-sudo mkdir -p /etc/apparmor.d/local
-cat << 'AAEOF' | sudo tee /etc/apparmor.d/local/usr.sbin.smartctl
-/dev/sd* rw,
-/dev/nvme* rw,
-/dev/hd* rw,
-AAEOF
-sudo apparmor_parser -r /etc/apparmor.d/usr.sbin.smartctl 2>/dev/null || true
-```
-
-**Step 4 — Reboot**
-
-> ⚠️ Group membership changes **require a full reboot** to take effect for SSH sessions. A logout/login is not enough.
-
-```bash
-sudo reboot
-```
-
-**Step 5 — Verify it works**
-```bash
-ssh YOUR_USERNAME@localhost "groups | grep disk && smartctl -a /dev/sda 2>&1 | head -5"
-```
-
-You should see `disk` in the groups line and smartctl showing disk info — not "Permission denied".
-
-**Why is this needed?**
-
-When you run `smartctl` interactively in a terminal it works because your desktop session already has the `disk` group active. SSH sessions start fresh and only get the groups that were active at last login — which is why a reboot (not just logout) is required after `usermod -aG disk`.
-
-AppArmor additionally restricts smartctl from opening raw block devices in non-interactive sessions. `aa-complain` switches it from blocking to logging-only.
-
----
+Unraid and Proxmox VE ship smartmontools and log in as `root`, so they need
+no preparation.
 
 ## Installation
 
+### HACS
+
+1. In HACS, open the menu → **Custom repositories**, add
+   `https://github.com/ChristianHandy/HAOS_SMART_Monitor` with type
+   **Integration**.
+2. Install **SMART Disk Monitor** and restart Home Assistant.
+
 ### Manual
 
-```
-config/
-└── custom_components/
-    └── smart_monitor/          ← copy this folder
-        ├── __init__.py
-        ├── manifest.json
-        ├── config_flow.py
-        ├── coordinator.py
-        ├── const.py
-        ├── smart_fetcher.py
-        ├── sensor.py
-        ├── binary_sensor.py
-        ├── button.py
-        ├── strings.json
-        └── translations/
-            └── en.json
-```
-
-Restart Home Assistant after copying.
-
----
+Copy `custom_components/smart_monitor` into the `custom_components` folder
+of your Home Assistant configuration and restart Home Assistant.
 
 ## Configuration
 
-1. **Settings → Devices & Services → Add Integration** → search *SMART Disk Monitor*
-2. Fill in:
+1. Go to **Settings → Devices & services → Add integration** and pick
+   **SMART Disk Monitor**.
+2. Enter the host, SSH port, user name and a password or a private key
+   (paste the whole key, starting with `-----BEGIN`).
+3. Compare the host key fingerprint with the one on the host and confirm it:
 
-| Field | Example | Notes |
+   ```bash
+   ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub
+   ```
+
+Add the integration once per host.
+
+### Options
+
+| Option | Default | Description |
 |---|---|---|
-| Hostname / IP | `192.168.1.10` | IP or hostname of the remote machine |
-| SSH Port | `22` | Default for all OS types |
-| Username | `christian` | The SSH user you set up above |
-| Password | `••••` | Or leave blank if using a key |
-| SSH Key Path | `/config/ssh/id_ed25519` | Path *inside the HA container* |
-| Server Type | `generic_linux` | Label only, used for display |
-| Scan Interval | `300` | Seconds; 300 = 5 minutes |
+| Do not wake up sleeping disks | On | Keeps the last values of disks in standby instead of spinning them up. |
+| Devices | Empty | Disks to read instead of discovering them, one per line: a device path, optionally followed by a smartctl device type, for example `/dev/bus/0 megaraid,3` or `/dev/sg0 cciss,1`. |
 
-3. Click **Submit** — HA will test the SSH connection.
-4. Repeat for each server.
+SMART data is read every 5 minutes. To read it on your own schedule, turn off
+polling in the integration's system options and call
+`homeassistant.update_entity` from an automation.
 
----
+## Entities
 
-## Entities Created
+Entities are created for the values a disk reports, so an NVMe SSD has no
+reallocated sector sensor and a SAS disk has grown defects instead.
 
-For a server `192.168.1.10` with disk `/dev/sda`:
-
-| Entity | Type | Description |
+| Entity | Disks | Notes |
 |---|---|---|
-| `sensor.…_health` | sensor | PASSED / FAILED / UNKNOWN |
-| `sensor.…_temperature` | sensor | °C |
-| `sensor.…_power_on_hours` | sensor | Hours |
-| `sensor.…_power_cycles` | sensor | Count |
-| `sensor.…_reallocated_sectors` | sensor | Count (HDD/SSD) |
-| `sensor.…_pending_sectors` | sensor | Count (HDD/SSD) |
-| `sensor.…_uncorrectable_sectors` | sensor | Count (HDD/SSD) |
-| `sensor.…_last_self_test` | sensor | Last test result + date |
-| `binary_sensor.…_health_problem` | binary | On = FAILED |
-| `binary_sensor.…_sector_problem` | binary | On = any bad sectors |
-| `button.…_run_short_self_test` | button | Starts short test |
-| `button.…_run_long_self_test` | button | Starts long test |
-| `button.…_run_conveyance_self_test` | button | Starts conveyance test |
-| `button.…_download_smart_report` | button | Saves full report to `/config/smart_reports/` |
+| Health | all | `passed`, `warning` (an attribute crossed its threshold, NVMe critical warning) or `failed` |
+| Temperature | all | °C |
+| Endurance used | SSD, NVMe, SAS SSD | % of the rated endurance |
+| Power-on time, Power cycles | all | diagnostic |
+| Last self-test | disks with self-tests | `passed`, `failed`, `aborted` |
+| Data read / written | NVMe, SAS, SSDs that report it | diagnostic |
+| Reallocated, pending and offline uncorrectable sectors, interface CRC errors | SATA | diagnostic |
+| Available spare, media errors | NVMe | diagnostic |
+| Grown defects, uncorrected read/write errors | SAS | diagnostic |
+| Command timeouts, spin retries, unsafe shutdowns, error log entries and more | varies | diagnostic, disabled by default |
+| Health problem, Bad sectors | binary sensors | `on` when there is a problem |
+| Self-test running, Standby | binary sensors | diagnostic |
+| Start short / long / conveyance self-test, Abort self-test | buttons | only the tests the disk supports |
 
----
+## Dashboard card
 
-## Automation Examples
-
-### Alert when any disk fails health check
+The [SMART Monitor card](card/README.md) shows all disks grouped by host with
+their health, temperature, wear and error counters, and can start
+self-tests.
 
 ```yaml
-automation:
-  alias: "Disk SMART failure alert"
-  trigger:
-    - platform: state
-      entity_id:
-        - binary_sensor.nas_dev_sda_health_problem
-        - binary_sensor.nas_dev_sdb_health_problem
-      to: "on"
-  action:
-    - service: notify.mobile_app_my_phone
-      data:
-        title: "⚠️ Disk Health Alert"
-        message: "{{ trigger.to_state.name }} is reporting a SMART failure!"
+type: custom:smart-monitor-card
+title: Disks
 ```
 
-### Alert on high disk temperature
+## Automation examples
+
+Notify when any disk reports a problem:
 
 ```yaml
-automation:
-  alias: "Disk overheating alert"
-  trigger:
-    - platform: numeric_state
-      entity_id: sensor.nas_dev_sda_temperature
-      above: 55
-  action:
-    - service: notify.notify
-      data:
-        message: "Disk /dev/sda is {{ states('sensor.nas_dev_sda_temperature') }}°C!"
+triggers:
+  - trigger: state
+    entity_id:
+      - binary_sensor.wdc_wd40efrx_68n32n0_health_problem
+      - binary_sensor.wdc_wd40efrx_68n32n0_bad_sectors
+    to: "on"
+actions:
+  - action: notify.mobile_app_phone
+    data:
+      title: Disk problem
+      message: "{{ trigger.to_state.name }} on {{ device_attr(device_id(trigger.entity_id), 'name') }}"
 ```
 
----
+Run a long self-test every month:
+
+```yaml
+triggers:
+  - trigger: time
+    at: "03:00:00"
+conditions:
+  - condition: template
+    value_template: "{{ now().day == 1 }}"
+actions:
+  - action: button.press
+    target:
+      entity_id: button.wdc_wd40efrx_68n32n0_start_long_self_test
+```
+
+## Security
+
+- The SSH host key is shown when a host is added and pinned. A different key
+  later stops the integration and asks you to confirm the new key, so a
+  machine pretending to be your server never receives your password.
+- Credentials are stored in Home Assistant's config entry storage, like the
+  credentials of every other integration.
+- Use a dedicated user with sudo rights for smartctl only, see
+  [Requirements](#requirements).
+- Commands are run with all arguments quoted. See [SECURITY.md](SECURITY.md)
+  for the full list of commands.
 
 ## Troubleshooting
 
-### Sensors all show "Unknown" / "Unbekannt"
+**"smartctl was not found"**: install smartmontools. On some NAS systems
+smartctl is in `/usr/sbin` or `/usr/local/sbin`; both are searched.
 
-This means the SSH connection works but `smartctl` cannot open the disk device. Check the HA logs (*Settings → System → Logs*, filter `smart_monitor`) for the exact error.
+**Disks are unavailable with "Permission denied"**: log in as root, or enable
+sudo as described in [Requirements](#requirements).
 
-**"Permission denied" on the device**
+**"smartctl could not be run with sudo"**: sudo asked for a password. Add the
+`NOPASSWD` rule shown above.
 
-Follow the full [Ubuntu Desktop setup](#ubuntu-desktop-most-involved--read-carefully) section above. The two most common causes are:
-- User not in the `disk` group → `sudo usermod -aG disk YOUR_USER` + reboot
-- AppArmor blocking SSH sessions → `sudo aa-complain /usr/sbin/smartctl`
+**A disk behind a RAID controller is missing**: run
+`smartctl --scan-open` on the host. If the disk is not listed, add it under
+**Devices** in the options, for example `/dev/sg0 cciss,0`.
 
-**smartctl not found**
+**"The SSH host key changed"**: if you reinstalled the host or regenerated
+its keys, open the reauthentication prompt on **Settings → Devices &
+services** and confirm the new fingerprint. Otherwise investigate before
+continuing.
 
-```bash
-which smartctl || apt install smartmontools
+**Download diagnostics** from the integration page when reporting a problem.
+
+## Upgrading from 1.x
+
+- Hosts added with 1.x ask you to re-enter the password or paste the private
+  key and to confirm the host key. Key files referenced by path are no longer
+  used.
+- Disks are now identified by WWN or serial number (or, if a disk reports
+  neither, by host and device path) instead of `/dev/sdX`, so
+  entity IDs change. The old entities show as unavailable; delete them from
+  **Settings → Entities**.
+- Health states are now `passed`, `warning` and `failed` (were `PASSED` and
+  `FAILED`). Update automations that compare them.
+- The **Download SMART Report** button was removed. Use **Download
+  diagnostics** on the integration page.
+- The scan interval can no longer be configured; see [Options](#options).
+
+## Development
+
+```text
+custom_components/smart_monitor/  the integration
+library/                          aiosmartctl, the SSH/smartctl library on PyPI
+card/                             the dashboard card
+tests/                            integration tests
+docs/core/                        files for the Home Assistant core submission
+script/                           translation, core port and check scripts
 ```
 
-### Cannot connect at all
-
 ```bash
-# Test SSH manually from another machine
-ssh YOUR_USER@192.168.1.x
-
-# Check SSH is running
-systemctl status ssh
+pip install -r requirements_test.txt ./library
+pytest                                   # integration tests
+cd library && pip install -e ".[test]" && pytest   # library tests
+python script/gen_translations.py        # after changing strings.json
+script/run_core_checks.sh                # Home Assistant core's own checks
 ```
 
-### Buttons not appearing
-
-Buttons appear under **"Steuerungen"** (Controls) on the device page, not under "Sensoren". If still missing, go to **Settings → Devices & Services → SMART Disk Monitor → ⋮ → Reload**.
-
-### SSH key not found
-
-The key path must be accessible from *within the Home Assistant container*. Store it under `/config/` and reference it as `/config/ssh/id_ed25519`.
-
----
+`script/run_core_checks.sh` copies the integration into a Home Assistant core
+checkout and runs hassfest, ruff, codespell, prettier, yamllint, strict mypy,
+pylint and pytest with 100% coverage, as core's CI does. See
+[docs/CORE_SUBMISSION.md](docs/CORE_SUBMISSION.md) for the path into core.
 
 ## License
 
-MIT – see `LICENSE`
+MIT, see [LICENSE](LICENSE).
