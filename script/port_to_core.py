@@ -23,6 +23,7 @@ _IMPORT_REWRITES = (
     ("pytest_homeassistant_custom_component.common", "tests.common"),
     ("pytest_homeassistant_custom_component.components", "tests.components"),
     ("pytest_homeassistant_custom_component.typing", "tests.typing"),
+    ("pytest_homeassistant_custom_component.syrupy", "tests.syrupy"),
     ("custom_components.smart_monitor", "homeassistant.components.smart_monitor"),
 )
 _CUSTOM_ONLY = re.compile(r"# BEGIN CUSTOM-ONLY.*?# END CUSTOM-ONLY\n\n*", re.DOTALL)

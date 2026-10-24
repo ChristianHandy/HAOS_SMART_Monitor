@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 
 from aiosmartctl import HostInfo
 import pytest
+from syrupy.assertion import SnapshotAssertion
 
 from custom_components.smart_monitor.const import DOMAIN
 from homeassistant.core import HomeAssistant
@@ -14,6 +15,7 @@ from . import default_disks
 from .const import ENTRY_DATA, FINGERPRINT, HOST_KEY
 
 from pytest_homeassistant_custom_component.common import MockConfigEntry
+from pytest_homeassistant_custom_component.syrupy import HomeAssistantSnapshotExtension
 
 
 # BEGIN CUSTOM-ONLY
@@ -22,6 +24,20 @@ def auto_enable_custom_integrations(
     enable_custom_integrations: None,
 ) -> None:
     """Enable custom integrations."""
+
+
+# END CUSTOM-ONLY
+
+
+# BEGIN CUSTOM-ONLY: Home Assistant core's own conftest provides this fixture.
+@pytest.fixture
+def snapshot(snapshot: SnapshotAssertion) -> SnapshotAssertion:
+    """Use Home Assistant's snapshot format.
+
+    syrupy and the test plugin both define this fixture and which one wins
+    depends on plugin load order, so pin it here.
+    """
+    return snapshot.use_extension(HomeAssistantSnapshotExtension)
 
 
 # END CUSTOM-ONLY
