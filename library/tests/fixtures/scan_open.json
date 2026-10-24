@@ -1,0 +1,12 @@
+{
+  "json_format_version": [1, 0],
+  "smartctl": {"version": [7, 4], "exit_status": 0},
+  "devices": [
+    {"name": "/dev/sda", "info_name": "/dev/sda [SAT]", "type": "sat", "protocol": "ATA"},
+    {"name": "/dev/sdc", "info_name": "/dev/sdc", "type": "scsi", "protocol": "SCSI"},
+    {"name": "/dev/sdg", "info_name": "/dev/sdg", "type": "scsi", "protocol": "SCSI", "open_error": "INQUIRY failed"},
+    {"name": "/dev/bus/0", "info_name": "/dev/bus/0 [megaraid_disk_02]", "type": "megaraid,2", "protocol": "SCSI"},
+    {"name": "/dev/nvme0", "info_name": "/dev/nvme0", "type": "nvme", "protocol": "NVMe"},
+    {"name": "/dev/sda", "info_name": "/dev/sda [SAT]", "type": "sat", "protocol": "ATA"}
+  ]
+}

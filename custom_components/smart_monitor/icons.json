@@ -1,0 +1,127 @@
+{
+  "entity": {
+    "binary_sensor": {
+      "health_problem": {
+        "default": "mdi:harddisk",
+        "state": {
+          "on": "mdi:harddisk-remove"
+        }
+      },
+      "sector_problem": {
+        "default": "mdi:check-circle-outline",
+        "state": {
+          "on": "mdi:alert-circle"
+        }
+      },
+      "self_test_running": {
+        "default": "mdi:clipboard-outline",
+        "state": {
+          "on": "mdi:clipboard-play-outline"
+        }
+      },
+      "standby": {
+        "default": "mdi:harddisk",
+        "state": {
+          "on": "mdi:sleep"
+        }
+      }
+    },
+    "button": {
+      "abort_self_test": {
+        "default": "mdi:stop-circle-outline"
+      },
+      "self_test_conveyance": {
+        "default": "mdi:truck-check"
+      },
+      "self_test_long": {
+        "default": "mdi:play-circle"
+      },
+      "self_test_short": {
+        "default": "mdi:play-circle-outline"
+      }
+    },
+    "sensor": {
+      "available_spare": {
+        "default": "mdi:battery-heart-variant"
+      },
+      "command_timeouts": {
+        "default": "mdi:timer-off-outline"
+      },
+      "data_read": {
+        "default": "mdi:download"
+      },
+      "data_written": {
+        "default": "mdi:upload"
+      },
+      "error_log_entries": {
+        "default": "mdi:format-list-text"
+      },
+      "grown_defects": {
+        "default": "mdi:alert"
+      },
+      "health": {
+        "default": "mdi:harddisk",
+        "state": {
+          "failed": "mdi:harddisk-remove",
+          "warning": "mdi:alert"
+        }
+      },
+      "last_self_test": {
+        "default": "mdi:clipboard-outline",
+        "state": {
+          "aborted": "mdi:clipboard-remove-outline",
+          "failed": "mdi:clipboard-alert",
+          "passed": "mdi:clipboard-check"
+        }
+      },
+      "media_errors": {
+        "default": "mdi:alert"
+      },
+      "non_medium_errors": {
+        "default": "mdi:alert-circle-outline"
+      },
+      "offline_uncorrectable": {
+        "default": "mdi:close-circle-outline"
+      },
+      "pending_sectors": {
+        "default": "mdi:alert-outline"
+      },
+      "percentage_used": {
+        "default": "mdi:chart-donut"
+      },
+      "power_cycles": {
+        "default": "mdi:power"
+      },
+      "power_on_hours": {
+        "default": "mdi:clock-outline"
+      },
+      "reallocated_sectors": {
+        "default": "mdi:alert"
+      },
+      "reallocation_events": {
+        "default": "mdi:alert"
+      },
+      "reported_uncorrectable": {
+        "default": "mdi:close-circle"
+      },
+      "spin_retry_count": {
+        "default": "mdi:rotate-right"
+      },
+      "udma_crc_errors": {
+        "default": "mdi:lan-disconnect"
+      },
+      "uncorrected_read_errors": {
+        "default": "mdi:book-alert-outline"
+      },
+      "uncorrected_verify_errors": {
+        "default": "mdi:check-decagram-outline"
+      },
+      "uncorrected_write_errors": {
+        "default": "mdi:pencil-off-outline"
+      },
+      "unsafe_shutdowns": {
+        "default": "mdi:power-plug-off"
+      }
+    }
+  }
+}

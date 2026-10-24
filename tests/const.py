@@ -1,0 +1,31 @@
+"""Constants for SMART Disk Monitor tests."""
+
+from custom_components.smart_monitor.const import CONF_HOST_KEY, CONF_USE_SUDO
+from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_PORT, CONF_USERNAME
+
+HOST_KEY = (
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMGyWU0ti3qAbzutvEF4eiEXKIVtL1oDPO5jTvOImZAy"
+)
+FINGERPRINT = "SHA256:c/Q9hiZvv9r+2y3gc7xdI3cgZ5e3IKtWvGtHfYazr6A"
+OTHER_HOST_KEY = (
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILB68Wp5Vc6Jhg/9UxwflORaDQ62aegjnZN7AJT+ouBE"
+)
+OTHER_FINGERPRINT = "SHA256:sqo3VsN+SiDogq7BJC3IAHwIVH+4ayqqd7WrLKlcUzM"
+PRIVATE_KEY = (
+    "-----BEGIN OPENSSH PRIVATE KEY-----\n"
+    "b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW\n"
+    "QyNTUxOQAAACAUMogkMTrd1jKQfz5JJrFcaiIXIIpeNSNQN95IgC0oXgAAAIiJQkZriUJG\n"
+    "awAAAAtzc2gtZWQyNTUxOQAAACAUMogkMTrd1jKQfz5JJrFcaiIXIIpeNSNQN95IgC0oXg\n"
+    "AAAECHS8VjirtSA8DXzFgEapmEm8D80lHjQ18Dmdi1W33qgRQyiCQxOt3WMpB/PkkmsVxq\n"
+    "Ihcgil41I1A33kiALSheAAAAAAECAwQF\n"
+    "-----END OPENSSH PRIVATE KEY-----\n"
+)
+
+ENTRY_DATA = {
+    CONF_HOST: "192.168.1.10",
+    CONF_PORT: 22,
+    CONF_USERNAME: "root",
+    CONF_PASSWORD: "secret",
+    CONF_USE_SUDO: False,
+    CONF_HOST_KEY: HOST_KEY,
+}

@@ -1,0 +1,33 @@
+{
+  "json_format_version": [1, 0],
+  "smartctl": {"version": [7, 4], "exit_status": 0},
+  "device": {"name": "/dev/sdc", "info_name": "/dev/sdc", "type": "scsi", "protocol": "SCSI"},
+  "scsi_vendor": "SEAGATE",
+  "vendor": "SEAGATE",
+  "scsi_product": "ST8000NM0075",
+  "product": "ST8000NM0075",
+  "model_name": "SEAGATE ST8000NM0075",
+  "scsi_revision": "E004",
+  "revision": "E004",
+  "scsi_version": "SPC-4",
+  "user_capacity": {"blocks": 15628053168, "bytes": 8001563222016},
+  "logical_block_size": 512,
+  "rotation_rate": 7200,
+  "form_factor": {"scsi_value": 2, "name": "3.5 inches"},
+  "logical_unit_id": "0x5000c500a1b2c3d4",
+  "serial_number": "ZA1ABCDE0000C1234567",
+  "device_type": {"scsi_terminology": "Peripheral Device Type [PDT]", "scsi_value": 0, "name": "disk"},
+  "smart_status": {"passed": true, "scsi": {"asc": 0, "ascq": 0, "ie_string": ""}},
+  "temperature": {"current": 34, "drive_trip": 60},
+  "power_on_time": {"hours": 41234, "minutes": 12},
+  "scsi_start_stop_cycle_counter": {"year_of_manufacture": "2018", "week_of_manufacture": "12", "specified_cycle_count_over_device_lifetime": 50000, "accumulated_start_stop_cycles": 61, "specified_load_unload_count_over_device_lifetime": 600000, "accumulated_load_unload_cycles": 1520},
+  "scsi_grown_defect_list": 3,
+  "scsi_error_counter_log": {
+    "read": {"errors_corrected_by_eccfast": 0, "errors_corrected_by_eccdelayed": 0, "errors_corrected_by_rereads_rewrites": 0, "total_errors_corrected": 0, "correction_algorithm_invocations": 0, "gigabytes_processed": "512345.678", "total_uncorrected_errors": 0},
+    "write": {"errors_corrected_by_eccfast": 0, "errors_corrected_by_eccdelayed": 0, "errors_corrected_by_rereads_rewrites": 0, "total_errors_corrected": 0, "correction_algorithm_invocations": 0, "gigabytes_processed": "123456.789", "total_uncorrected_errors": 0},
+    "verify": {"errors_corrected_by_eccfast": 0, "errors_corrected_by_eccdelayed": 0, "errors_corrected_by_rereads_rewrites": 0, "total_errors_corrected": 0, "correction_algorithm_invocations": 0, "gigabytes_processed": "2.345", "total_uncorrected_errors": 1}
+  },
+  "scsi_nonmedium_error_count": 5,
+  "scsi_self_test_0": {"code": {"value": 1, "string": "Background short"}, "result": {"value": 0, "string": "Completed"}, "power_on_time": {"hours": 41200, "aka": "accumulated_power_on_hours"}},
+  "scsi_self_test_1": {"code": {"value": 2, "string": "Background long"}, "result": {"value": 2, "string": "Interrupted ('-X' switch)"}, "power_on_time": {"hours": 40000, "aka": "accumulated_power_on_hours"}}
+}

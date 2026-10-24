@@ -1,0 +1,71 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  library:
+    name: aiosmartctl (Python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.13", "3.14"]
+    defaults:
+      run:
+        working-directory: library
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          python-version: ${{ matrix.python }}
+      - run: uv pip install -e ".[test]" mypy ruff
+      - run: ruff check . && ruff format --check .
+      - run: mypy --strict src
+      - run: pytest --cov --cov-report=term-missing --cov-fail-under=90
+
+  integration:
+    name: Integration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          python-version: "3.14"
+      - run: uv pip install -r requirements_test.txt ./library ruff
+      - run: ruff check custom_components tests script && ruff format --check custom_components tests script
+      - name: Translations are up to date
+        run: python script/gen_translations.py --check
+      - run: pytest --cov --cov-report=term-missing --cov-fail-under=100
+
+  core:
+    name: Home Assistant core checks (${{ matrix.platforms || 'all platforms' }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The first core pull request may only contain one platform.
+        platforms: ["", "sensor"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          python-version: "3.14"
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+      - name: Run core checks
+        env:
+          PLATFORMS: ${{ matrix.platforms }}
+        run: script/run_core_checks.sh "$RUNNER_TEMP/core-checks"

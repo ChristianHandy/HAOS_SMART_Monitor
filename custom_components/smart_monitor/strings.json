@@ -1,0 +1,231 @@
+{
+  "config": {
+    "abort": {
+      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]",
+      "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
+      "different_host": "The SSH host key belongs to a different host than the one configured."
+    },
+    "error": {
+      "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
+      "host_key_changed": "The host presented a different SSH host key than the one that was confirmed.",
+      "invalid_auth": "[%key:common::config_flow::error::invalid_auth%]",
+      "invalid_private_key": "The private key could not be read. Paste an unencrypted OpenSSH or PEM private key.",
+      "missing_credentials": "Enter a password, a private key, or both.",
+      "smartctl_not_found": "smartctl was not found on the host. Install smartmontools.",
+      "sudo_failed": "smartctl could not be run with sudo. Allow the user to run smartctl with sudo without a password.",
+      "unknown": "[%key:common::config_flow::error::unknown%]"
+    },
+    "step": {
+      "confirm_host_key": {
+        "description": "{host} presented an SSH host key with this fingerprint:\n\n`{fingerprint}`\n\nCompare it with the output of `ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub` on the host. Your credentials are only sent once you confirm.",
+        "title": "Confirm the host key"
+      },
+      "reauth_confirm": {
+        "data": {
+          "password": "[%key:common::config_flow::data::password%]",
+          "private_key": "[%key:component::smart_monitor::config::step::user::data::private_key%]"
+        },
+        "data_description": {
+          "password": "[%key:component::smart_monitor::config::step::user::data_description::password%]",
+          "private_key": "[%key:component::smart_monitor::config::step::user::data_description::private_key%]"
+        },
+        "description": "Enter the credentials for {host}. Its SSH host key has the fingerprint `{fingerprint}`.",
+        "title": "[%key:common::config_flow::title::reauth%]"
+      },
+      "reauth_host_key_changed": {
+        "data": {
+          "password": "[%key:common::config_flow::data::password%]",
+          "private_key": "[%key:component::smart_monitor::config::step::user::data::private_key%]"
+        },
+        "data_description": {
+          "password": "[%key:component::smart_monitor::config::step::user::data_description::password%]",
+          "private_key": "[%key:component::smart_monitor::config::step::user::data_description::private_key%]"
+        },
+        "description": "The SSH host key of {host} changed. Its new fingerprint is `{fingerprint}`.\n\nOnly continue if you reinstalled the host or regenerated its SSH keys. Otherwise someone may be intercepting the connection.",
+        "title": "The host key changed"
+      },
+      "reconfigure": {
+        "data": {
+          "host": "[%key:common::config_flow::data::host%]",
+          "port": "[%key:common::config_flow::data::port%]",
+          "use_sudo": "[%key:component::smart_monitor::config::step::user::data::use_sudo%]",
+          "username": "[%key:common::config_flow::data::username%]"
+        },
+        "data_description": {
+          "host": "[%key:component::smart_monitor::config::step::user::data_description::host%]",
+          "port": "[%key:component::smart_monitor::config::step::user::data_description::port%]",
+          "use_sudo": "[%key:component::smart_monitor::config::step::user::data_description::use_sudo%]",
+          "username": "[%key:component::smart_monitor::config::step::user::data_description::username%]"
+        }
+      },
+      "user": {
+        "data": {
+          "host": "[%key:common::config_flow::data::host%]",
+          "password": "[%key:common::config_flow::data::password%]",
+          "port": "[%key:common::config_flow::data::port%]",
+          "private_key": "Private key",
+          "use_sudo": "Run smartctl with sudo",
+          "username": "[%key:common::config_flow::data::username%]"
+        },
+        "data_description": {
+          "host": "The hostname or IP address of the server whose disks to monitor.",
+          "password": "The SSH password. Leave empty when you use a private key.",
+          "port": "The SSH port of the server.",
+          "private_key": "An unencrypted SSH private key in OpenSSH or PEM format. Leave empty when you use a password.",
+          "use_sudo": "Enable when the user is not root and may run smartctl with sudo without a password.",
+          "username": "The user to log in as."
+        },
+        "description": "Monitor the SMART health of the disks of a Linux, Unraid, Proxmox VE, TrueNAS or other server over SSH. The server needs smartmontools 7 or newer."
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "health_problem": {
+        "name": "Health problem"
+      },
+      "sector_problem": {
+        "name": "Bad sectors"
+      },
+      "self_test_running": {
+        "name": "Self-test running"
+      },
+      "standby": {
+        "name": "Standby"
+      }
+    },
+    "button": {
+      "abort_self_test": {
+        "name": "Abort self-test"
+      },
+      "self_test_conveyance": {
+        "name": "Start conveyance self-test"
+      },
+      "self_test_long": {
+        "name": "Start long self-test"
+      },
+      "self_test_short": {
+        "name": "Start short self-test"
+      }
+    },
+    "sensor": {
+      "available_spare": {
+        "name": "Available spare"
+      },
+      "command_timeouts": {
+        "name": "Command timeouts"
+      },
+      "data_read": {
+        "name": "Data read"
+      },
+      "data_written": {
+        "name": "Data written"
+      },
+      "error_log_entries": {
+        "name": "Error log entries"
+      },
+      "grown_defects": {
+        "name": "Grown defects"
+      },
+      "health": {
+        "name": "Health",
+        "state": {
+          "failed": "Failed",
+          "passed": "Passed",
+          "warning": "Warning"
+        }
+      },
+      "last_self_test": {
+        "name": "Last self-test",
+        "state": {
+          "aborted": "Aborted",
+          "failed": "Failed",
+          "passed": "Passed",
+          "unknown": "Unknown"
+        }
+      },
+      "media_errors": {
+        "name": "Media errors"
+      },
+      "non_medium_errors": {
+        "name": "Non-medium errors"
+      },
+      "offline_uncorrectable": {
+        "name": "Offline uncorrectable sectors"
+      },
+      "pending_sectors": {
+        "name": "Pending sectors"
+      },
+      "percentage_used": {
+        "name": "Endurance used"
+      },
+      "power_cycles": {
+        "name": "Power cycles"
+      },
+      "power_on_hours": {
+        "name": "Power-on time"
+      },
+      "reallocated_sectors": {
+        "name": "Reallocated sectors"
+      },
+      "reallocation_events": {
+        "name": "Reallocation events"
+      },
+      "reported_uncorrectable": {
+        "name": "Reported uncorrectable errors"
+      },
+      "spin_retry_count": {
+        "name": "Spin retries"
+      },
+      "udma_crc_errors": {
+        "name": "Interface CRC errors"
+      },
+      "uncorrected_read_errors": {
+        "name": "Uncorrected read errors"
+      },
+      "uncorrected_verify_errors": {
+        "name": "Uncorrected verify errors"
+      },
+      "uncorrected_write_errors": {
+        "name": "Uncorrected write errors"
+      },
+      "unsafe_shutdowns": {
+        "name": "Unsafe shutdowns"
+      }
+    }
+  },
+  "exceptions": {
+    "host_key_changed": {
+      "message": "The SSH host key of the server changed."
+    },
+    "host_key_missing": {
+      "message": "The SSH host key of the server has not been confirmed yet."
+    },
+    "invalid_auth": {
+      "message": "The server rejected the SSH credentials."
+    },
+    "self_test_failed": {
+      "message": "Could not control the self-test of {device}: {error}"
+    },
+    "update_failed": {
+      "message": "Could not read SMART data: {error}"
+    }
+  },
+  "options": {
+    "error": {
+      "invalid_device": "Each line must be a device path, optionally followed by a smartctl device type, for example `/dev/bus/0 megaraid,3`."
+    },
+    "step": {
+      "init": {
+        "data": {
+          "devices": "Devices",
+          "skip_standby": "Do not wake up sleeping disks"
+        },
+        "data_description": {
+          "devices": "Disks to read instead of discovering them, one per line. Use this for RAID controllers smartctl cannot scan, for example `/dev/sg0 cciss,0`.",
+          "skip_standby": "Keep the last values of disks in standby instead of spinning them up."
+        }
+      }
+    }
+  }
+}

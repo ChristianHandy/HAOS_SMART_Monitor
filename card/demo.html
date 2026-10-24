@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SMART Monitor card demo</title>
+    <!-- Renders the card with made-up data, without Home Assistant. -->
+    <style>
+      :root {
+        --primary-color: #03a9f4;
+        --primary-text-color: #212121;
+        --secondary-text-color: #727272;
+        --disabled-text-color: #bdbdbd;
+        --divider-color: rgba(0, 0, 0, 0.12);
+        --card-background-color: #fff;
+        --secondary-background-color: #f5f5f5;
+        --success-color: #43a047;
+        --warning-color: #ffa000;
+        --error-color: #db4437;
+        --page-background: #fafafa;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --primary-text-color: #e1e1e1;
+          --secondary-text-color: #9b9b9b;
+          --divider-color: rgba(225, 225, 225, 0.12);
+          --card-background-color: #1c1c1c;
+          --secondary-background-color: #282828;
+          --page-background: #111;
+        }
+      }
+      body { font-family: Roboto, system-ui, sans-serif; color: var(--primary-text-color); background: var(--page-background);
+             margin: 0; padding: 16px; }
+      main { max-width: 560px; margin: 0 auto; }
+      ha-card { display: block; background: var(--card-background-color); border-radius: 12px;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2); }
+    </style>
+  </head>
+  <body>
+    <main><smart-monitor-card id="card"></smart-monitor-card></main>
+    <script type="module">
+      customElements.define("ha-card", class extends HTMLElement {});
+      // Stand-in for Home Assistant's icon element: a dot in the icon's colour.
+      customElements.define("ha-icon", class extends HTMLElement {
+        connectedCallback() {
+          this.attachShadow({ mode: "open" }).innerHTML = `<style>
+            :host { display: inline-flex; width: var(--mdc-icon-size, 24px); height: var(--mdc-icon-size, 24px);
+                    align-items: center; justify-content: center; }
+            span { width: 70%; height: 70%; border-radius: 50%; background: currentColor; opacity: .85; }</style><span></span>`;
+        }
+      });
+      await import("./smart-monitor-card.js");
+
+      const devices = {};
+      const entities = {};
+      const states = {};
+      const device = (id, name, extra = {}) => (devices[id] = { id, name, name_by_user: null, ...extra });
+      const add = (deviceId, domain, key, state, attributes = {}) => {
+        const entityId = `${domain}.${deviceId}_${key}`;
+        entities[entityId] = { entity_id: entityId, device_id: deviceId, platform: "smart_monitor",
+                               translation_key: key === "temperature" ? undefined : key };
+        states[entityId] = { entity_id: entityId, state: String(state), attributes, last_updated: "now" };
+      };
+      const disk = (id, name, manufacturer, host, values) => {
+        device(id, name, { manufacturer, via_device_id: host });
+        for (const [key, value] of Object.entries(values)) {
+          const [domain, k] = key.includes(".") ? key.split(".") : ["sensor", key];
+          const unit = { temperature: "°C", percentage_used: "%", available_spare: "%", data_written: "TB" }[k];
+          add(id, domain, k, value, { unit_of_measurement: unit, device_class: k === "temperature" ? "temperature" : undefined });
+        }
+      };
+
+      device("tower", "tower", { model: "Unraid" });
+      device("pve01", "pve01", { model: "Proxmox VE" });
+      disk("wd", "WDC WD40EFRX-68N32N0", "Western Digital", "tower", {
+        health: "passed", temperature: 37, power_on_hours: 35123, power_cycles: 87, reallocated_sectors: 0,
+        pending_sectors: 0, udma_crc_errors: 2, last_self_test: "passed",
+        "binary_sensor.standby": "off", "binary_sensor.sector_problem": "off", "binary_sensor.self_test_running": "off",
+        "button.self_test_short": "unknown", "button.self_test_long": "unknown", "button.abort_self_test": "unknown",
+      });
+      disk("st", "ST2000DM001-1CH164", "Seagate", "tower", {
+        health: "failed", temperature: 48, power_on_hours: 22010, reallocated_sectors: 3912, pending_sectors: 48,
+        offline_uncorrectable: 48, last_self_test: "failed", "binary_sensor.sector_problem": "on",
+        "binary_sensor.standby": "off",
+      });
+      disk("sleepy", "WDC WD80EFZZ-68BTXN0", "Western Digital", "tower", {
+        health: "passed", temperature: 29, power_on_hours: 9001, "binary_sensor.standby": "on",
+        "binary_sensor.sector_problem": "off",
+      });
+      disk("nvme", "Samsung SSD 980 PRO 2TB", "Samsung", "pve01", {
+        health: "passed", temperature: 56, percentage_used: 3, available_spare: 100, power_on_hours: 6789,
+        data_written: 23.39, media_errors: 0, unsafe_shutdowns: 17, "binary_sensor.self_test_running": "on",
+      });
+      disk("sas", "SEAGATE ST8000NM0075", "Seagate", "pve01", {
+        health: "warning", temperature: 34, power_on_hours: 41234, grown_defects: 3, uncorrected_read_errors: 0,
+        uncorrected_write_errors: 0, last_self_test: "passed", "binary_sensor.sector_problem": "on",
+      });
+      disk("ssd", "Samsung SSD 870 EVO 1TB", "Samsung", "pve01", {
+        health: "passed", temperature: 31, percentage_used: 78, power_on_hours: 30, data_written: 20,
+      });
+
+      const card = document.getElementById("card");
+      card.setConfig({ title: "Disks" });
+      card.hass = {
+        devices, entities, states,
+        formatEntityState: (s) => `${s.state}${s.attributes.unit_of_measurement ? ` ${s.attributes.unit_of_measurement}` : ""}`,
+        callService: (domain, service, data) => console.log("callService", domain, service, data),
+      };
+      card.addEventListener("hass-more-info", (e) => console.log("more-info", e.detail.entityId));
+    </script>
+  </body>
+</html>

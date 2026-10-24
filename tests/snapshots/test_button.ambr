@@ -1,0 +1,651 @@
+# serializer version: 1
+# name: test_entities[button.samsung_ssd_870_evo_1tb_abort_self_test-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': list([
+      None,
+    ]),
+    'area_id': None,
+    'capabilities': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
+    'device_class': None,
+    'device_id': <ANY>,
+    'disabled_by': None,
+    'domain': 'button',
+    'entity_category': <EntityCategory.DIAGNOSTIC: 'diagnostic'>,
+    'entity_id': 'button.samsung_ssd_870_evo_1tb_abort_self_test',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'object_id_base': 'Abort self-test',
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': None,
+    'original_name': 'Abort self-test',
+    'platform': 'smart_monitor',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'abort_self_test',
+    'unique_id': 'wwn-0x5002538ee7662cc2_abort_self_test',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_entities[button.samsung_ssd_870_evo_1tb_abort_self_test-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      <EntityStateAttribute.FRIENDLY_NAME: 'friendly_name'>: 'Samsung SSD 870 EVO 1TB Abort self-test',
+    }),
+    'context': <ANY>,
+    'entity_id': 'button.samsung_ssd_870_evo_1tb_abort_self_test',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': 'unknown',
+  })
+# ---
+# name: test_entities[button.samsung_ssd_870_evo_1tb_start_long_self_test-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': list([
+      None,
+    ]),
+    'area_id': None,
+    'capabilities': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
+    'device_class': None,
+    'device_id': <ANY>,
+    'disabled_by': None,
+    'domain': 'button',
+    'entity_category': <EntityCategory.DIAGNOSTIC: 'diagnostic'>,
+    'entity_id': 'button.samsung_ssd_870_evo_1tb_start_long_self_test',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'object_id_base': 'Start long self-test',
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': None,
+    'original_name': 'Start long self-test',
+    'platform': 'smart_monitor',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'self_test_long',
+    'unique_id': 'wwn-0x5002538ee7662cc2_self_test_long',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_entities[button.samsung_ssd_870_evo_1tb_start_long_self_test-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      <EntityStateAttribute.FRIENDLY_NAME: 'friendly_name'>: 'Samsung SSD 870 EVO 1TB Start long self-test',
+    }),
+    'context': <ANY>,
+    'entity_id': 'button.samsung_ssd_870_evo_1tb_start_long_self_test',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': 'unknown',
+  })
+# ---
+# name: test_entities[button.samsung_ssd_870_evo_1tb_start_short_self_test-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': list([
+      None,
+    ]),
+    'area_id': None,
+    'capabilities': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
+    'device_class': None,
+    'device_id': <ANY>,
+    'disabled_by': None,
+    'domain': 'button',
+    'entity_category': <EntityCategory.DIAGNOSTIC: 'diagnostic'>,
+    'entity_id': 'button.samsung_ssd_870_evo_1tb_start_short_self_test',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'object_id_base': 'Start short self-test',
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': None,
+    'original_name': 'Start short self-test',
+    'platform': 'smart_monitor',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'self_test_short',
+    'unique_id': 'wwn-0x5002538ee7662cc2_self_test_short',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_entities[button.samsung_ssd_870_evo_1tb_start_short_self_test-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      <EntityStateAttribute.FRIENDLY_NAME: 'friendly_name'>: 'Samsung SSD 870 EVO 1TB Start short self-test',
+    }),
+    'context': <ANY>,
+    'entity_id': 'button.samsung_ssd_870_evo_1tb_start_short_self_test',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': 'unknown',
+  })
+# ---
+# name: test_entities[button.samsung_ssd_980_pro_2tb_abort_self_test-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': list([
+      None,
+    ]),
+    'area_id': None,
+    'capabilities': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
+    'device_class': None,
+    'device_id': <ANY>,
+    'disabled_by': None,
+    'domain': 'button',
+    'entity_category': <EntityCategory.DIAGNOSTIC: 'diagnostic'>,
+    'entity_id': 'button.samsung_ssd_980_pro_2tb_abort_self_test',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'object_id_base': 'Abort self-test',
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': None,
+    'original_name': 'Abort self-test',
+    'platform': 'smart_monitor',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'abort_self_test',
+    'unique_id': 'samsung_ssd_980_pro_2tb_s69enf0r123456x_abort_self_test',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_entities[button.samsung_ssd_980_pro_2tb_abort_self_test-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      <EntityStateAttribute.FRIENDLY_NAME: 'friendly_name'>: 'Samsung SSD 980 PRO 2TB Abort self-test',
+    }),
+    'context': <ANY>,
+    'entity_id': 'button.samsung_ssd_980_pro_2tb_abort_self_test',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': 'unknown',
+  })
+# ---
+# name: test_entities[button.samsung_ssd_980_pro_2tb_start_long_self_test-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': list([
+      None,
+    ]),
+    'area_id': None,
+    'capabilities': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
+    'device_class': None,
+    'device_id': <ANY>,
+    'disabled_by': None,
+    'domain': 'button',
+    'entity_category': <EntityCategory.DIAGNOSTIC: 'diagnostic'>,
+    'entity_id': 'button.samsung_ssd_980_pro_2tb_start_long_self_test',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'object_id_base': 'Start long self-test',
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': None,
+    'original_name': 'Start long self-test',
+    'platform': 'smart_monitor',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'self_test_long',
+    'unique_id': 'samsung_ssd_980_pro_2tb_s69enf0r123456x_self_test_long',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_entities[button.samsung_ssd_980_pro_2tb_start_long_self_test-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      <EntityStateAttribute.FRIENDLY_NAME: 'friendly_name'>: 'Samsung SSD 980 PRO 2TB Start long self-test',
+    }),
+    'context': <ANY>,
+    'entity_id': 'button.samsung_ssd_980_pro_2tb_start_long_self_test',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': 'unknown',
+  })
+# ---
+# name: test_entities[button.samsung_ssd_980_pro_2tb_start_short_self_test-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': list([
+      None,
+    ]),
+    'area_id': None,
+    'capabilities': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
+    'device_class': None,
+    'device_id': <ANY>,
+    'disabled_by': None,
+    'domain': 'button',
+    'entity_category': <EntityCategory.DIAGNOSTIC: 'diagnostic'>,
+    'entity_id': 'button.samsung_ssd_980_pro_2tb_start_short_self_test',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'object_id_base': 'Start short self-test',
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': None,
+    'original_name': 'Start short self-test',
+    'platform': 'smart_monitor',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'self_test_short',
+    'unique_id': 'samsung_ssd_980_pro_2tb_s69enf0r123456x_self_test_short',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_entities[button.samsung_ssd_980_pro_2tb_start_short_self_test-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      <EntityStateAttribute.FRIENDLY_NAME: 'friendly_name'>: 'Samsung SSD 980 PRO 2TB Start short self-test',
+    }),
+    'context': <ANY>,
+    'entity_id': 'button.samsung_ssd_980_pro_2tb_start_short_self_test',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': 'unknown',
+  })
+# ---
+# name: test_entities[button.seagate_st8000nm0075_abort_self_test-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': list([
+      None,
+    ]),
+    'area_id': None,
+    'capabilities': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
+    'device_class': None,
+    'device_id': <ANY>,
+    'disabled_by': None,
+    'domain': 'button',
+    'entity_category': <EntityCategory.DIAGNOSTIC: 'diagnostic'>,
+    'entity_id': 'button.seagate_st8000nm0075_abort_self_test',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'object_id_base': 'Abort self-test',
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': None,
+    'original_name': 'Abort self-test',
+    'platform': 'smart_monitor',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'abort_self_test',
+    'unique_id': 'wwn-0x5000c500a1b2c3d4_abort_self_test',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_entities[button.seagate_st8000nm0075_abort_self_test-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      <EntityStateAttribute.FRIENDLY_NAME: 'friendly_name'>: 'SEAGATE ST8000NM0075 Abort self-test',
+    }),
+    'context': <ANY>,
+    'entity_id': 'button.seagate_st8000nm0075_abort_self_test',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': 'unknown',
+  })
+# ---
+# name: test_entities[button.seagate_st8000nm0075_start_long_self_test-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': list([
+      None,
+    ]),
+    'area_id': None,
+    'capabilities': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
+    'device_class': None,
+    'device_id': <ANY>,
+    'disabled_by': None,
+    'domain': 'button',
+    'entity_category': <EntityCategory.DIAGNOSTIC: 'diagnostic'>,
+    'entity_id': 'button.seagate_st8000nm0075_start_long_self_test',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'object_id_base': 'Start long self-test',
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': None,
+    'original_name': 'Start long self-test',
+    'platform': 'smart_monitor',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'self_test_long',
+    'unique_id': 'wwn-0x5000c500a1b2c3d4_self_test_long',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_entities[button.seagate_st8000nm0075_start_long_self_test-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      <EntityStateAttribute.FRIENDLY_NAME: 'friendly_name'>: 'SEAGATE ST8000NM0075 Start long self-test',
+    }),
+    'context': <ANY>,
+    'entity_id': 'button.seagate_st8000nm0075_start_long_self_test',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': 'unknown',
+  })
+# ---
+# name: test_entities[button.seagate_st8000nm0075_start_short_self_test-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': list([
+      None,
+    ]),
+    'area_id': None,
+    'capabilities': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
+    'device_class': None,
+    'device_id': <ANY>,
+    'disabled_by': None,
+    'domain': 'button',
+    'entity_category': <EntityCategory.DIAGNOSTIC: 'diagnostic'>,
+    'entity_id': 'button.seagate_st8000nm0075_start_short_self_test',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'object_id_base': 'Start short self-test',
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': None,
+    'original_name': 'Start short self-test',
+    'platform': 'smart_monitor',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'self_test_short',
+    'unique_id': 'wwn-0x5000c500a1b2c3d4_self_test_short',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_entities[button.seagate_st8000nm0075_start_short_self_test-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      <EntityStateAttribute.FRIENDLY_NAME: 'friendly_name'>: 'SEAGATE ST8000NM0075 Start short self-test',
+    }),
+    'context': <ANY>,
+    'entity_id': 'button.seagate_st8000nm0075_start_short_self_test',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': 'unknown',
+  })
+# ---
+# name: test_entities[button.wdc_wd40efrx_68n32n0_abort_self_test-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': list([
+      None,
+    ]),
+    'area_id': None,
+    'capabilities': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
+    'device_class': None,
+    'device_id': <ANY>,
+    'disabled_by': None,
+    'domain': 'button',
+    'entity_category': <EntityCategory.DIAGNOSTIC: 'diagnostic'>,
+    'entity_id': 'button.wdc_wd40efrx_68n32n0_abort_self_test',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'object_id_base': 'Abort self-test',
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': None,
+    'original_name': 'Abort self-test',
+    'platform': 'smart_monitor',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'abort_self_test',
+    'unique_id': 'wwn-0x50014ee2b619edd5_abort_self_test',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_entities[button.wdc_wd40efrx_68n32n0_abort_self_test-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      <EntityStateAttribute.FRIENDLY_NAME: 'friendly_name'>: 'WDC WD40EFRX-68N32N0 Abort self-test',
+    }),
+    'context': <ANY>,
+    'entity_id': 'button.wdc_wd40efrx_68n32n0_abort_self_test',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': 'unknown',
+  })
+# ---
+# name: test_entities[button.wdc_wd40efrx_68n32n0_start_conveyance_self_test-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': list([
+      None,
+    ]),
+    'area_id': None,
+    'capabilities': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
+    'device_class': None,
+    'device_id': <ANY>,
+    'disabled_by': None,
+    'domain': 'button',
+    'entity_category': <EntityCategory.DIAGNOSTIC: 'diagnostic'>,
+    'entity_id': 'button.wdc_wd40efrx_68n32n0_start_conveyance_self_test',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'object_id_base': 'Start conveyance self-test',
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': None,
+    'original_name': 'Start conveyance self-test',
+    'platform': 'smart_monitor',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'self_test_conveyance',
+    'unique_id': 'wwn-0x50014ee2b619edd5_self_test_conveyance',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_entities[button.wdc_wd40efrx_68n32n0_start_conveyance_self_test-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      <EntityStateAttribute.FRIENDLY_NAME: 'friendly_name'>: 'WDC WD40EFRX-68N32N0 Start conveyance self-test',
+    }),
+    'context': <ANY>,
+    'entity_id': 'button.wdc_wd40efrx_68n32n0_start_conveyance_self_test',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': 'unknown',
+  })
+# ---
+# name: test_entities[button.wdc_wd40efrx_68n32n0_start_long_self_test-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': list([
+      None,
+    ]),
+    'area_id': None,
+    'capabilities': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
+    'device_class': None,
+    'device_id': <ANY>,
+    'disabled_by': None,
+    'domain': 'button',
+    'entity_category': <EntityCategory.DIAGNOSTIC: 'diagnostic'>,
+    'entity_id': 'button.wdc_wd40efrx_68n32n0_start_long_self_test',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'object_id_base': 'Start long self-test',
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': None,
+    'original_name': 'Start long self-test',
+    'platform': 'smart_monitor',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'self_test_long',
+    'unique_id': 'wwn-0x50014ee2b619edd5_self_test_long',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_entities[button.wdc_wd40efrx_68n32n0_start_long_self_test-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      <EntityStateAttribute.FRIENDLY_NAME: 'friendly_name'>: 'WDC WD40EFRX-68N32N0 Start long self-test',
+    }),
+    'context': <ANY>,
+    'entity_id': 'button.wdc_wd40efrx_68n32n0_start_long_self_test',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': 'unknown',
+  })
+# ---
+# name: test_entities[button.wdc_wd40efrx_68n32n0_start_short_self_test-entry]
+  EntityRegistryEntrySnapshot({
+    'aliases': list([
+      None,
+    ]),
+    'area_id': None,
+    'capabilities': None,
+    'config_entry_id': <ANY>,
+    'config_subentry_id': <ANY>,
+    'device_class': None,
+    'device_id': <ANY>,
+    'disabled_by': None,
+    'domain': 'button',
+    'entity_category': <EntityCategory.DIAGNOSTIC: 'diagnostic'>,
+    'entity_id': 'button.wdc_wd40efrx_68n32n0_start_short_self_test',
+    'has_entity_name': True,
+    'hidden_by': None,
+    'icon': None,
+    'id': <ANY>,
+    'labels': set({
+    }),
+    'name': None,
+    'object_id_base': 'Start short self-test',
+    'options': dict({
+    }),
+    'original_device_class': None,
+    'original_icon': None,
+    'original_name': 'Start short self-test',
+    'platform': 'smart_monitor',
+    'previous_unique_id': None,
+    'suggested_object_id': None,
+    'supported_features': 0,
+    'translation_key': 'self_test_short',
+    'unique_id': 'wwn-0x50014ee2b619edd5_self_test_short',
+    'unit_of_measurement': None,
+  })
+# ---
+# name: test_entities[button.wdc_wd40efrx_68n32n0_start_short_self_test-state]
+  StateSnapshot({
+    'attributes': ReadOnlyDict({
+      <EntityStateAttribute.FRIENDLY_NAME: 'friendly_name'>: 'WDC WD40EFRX-68N32N0 Start short self-test',
+    }),
+    'context': <ANY>,
+    'entity_id': 'button.wdc_wd40efrx_68n32n0_start_short_self_test',
+    'last_changed': <ANY>,
+    'last_reported': <ANY>,
+    'last_updated': <ANY>,
+    'state': 'unknown',
+  })
+# ---
