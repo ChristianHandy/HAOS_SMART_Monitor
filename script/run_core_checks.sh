@@ -77,12 +77,16 @@ codespell --ignore-words-list=aiport,astroid,checkin,currenty,hass,iif,incomfort
 step "yamllint"
 yamllint -c .yamllint "$COMPONENT"
 
-if command -v npx >/dev/null; then
+if command -v npm >/dev/null; then
   step "prettier"
-  npx --yes -p prettier@3.6.2 -p prettier-plugin-sort-json@4.2.0 prettier --check \
+  # Core's .prettierrc.js loads its plugin by name, so it must be resolvable.
+  [ -d "$WORK/prettier/node_modules" ] ||
+    npm install --silent --no-audit --no-fund --prefix "$WORK/prettier" \
+      prettier@3.6.2 prettier-plugin-sort-json@4.2.0
+  NODE_PATH="$WORK/prettier/node_modules" "$WORK/prettier/node_modules/.bin/prettier" --check \
     $(find "$COMPONENT" "$TESTS" \( -name '*.json' -o -name '*.yaml' \) -not -path '*/fixtures/*')
 else
-  step "prettier skipped: npx not found"
+  step "prettier skipped: npm not found"
 fi
 
 step "mypy"
