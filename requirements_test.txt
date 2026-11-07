@@ -1,2 +1,2 @@
 # Test requirements for the custom integration. The library is installed from ./library.
-pytest-homeassistant-custom-component==0.13.373
+pytest-homeassistant-custom-component==0.13.375
